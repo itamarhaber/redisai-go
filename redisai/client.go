@@ -3,6 +3,7 @@ package redisai
 import (
 	"fmt"
 	"io/ioutil"
+	"reflect"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
@@ -61,6 +62,14 @@ type Client struct {
 	pool *redis.Pool
 }
 
+type PipelinedClient struct {
+	Pool            *redis.Pool
+	pipelineMaxSize int
+	pipelinePos     int
+	ActiveConn      redis.Conn
+}
+
+
 // Connect intializes a Client
 func Connect(url string) (c *Client) {
 	c = &Client{
@@ -72,6 +81,24 @@ func Connect(url string) (c *Client) {
 	}
 	return c
 }
+
+
+// ConnectPipelined intializes a Client with pipeline enabled by default
+func ConnectPipelined(url string, pipelineMax int ) (c *PipelinedClient) {
+	c = &PipelinedClient{
+		Pool: &redis.Pool{
+			MaxIdle:     3,
+			IdleTimeout: 240 * time.Second,
+			Dial:        func() (redis.Conn, error) { return redis.DialURL(url) },
+		},
+		pipelineMaxSize: pipelineMax,
+		pipelinePos: 0,
+		ActiveConn: nil,
+	}
+	return c
+}
+
+
 
 // ModelSet sets a RedisAI model from a blob
 func (c *Client) ModelSet(name string, backend BackendType, device DeviceType, data []byte, inputs []string, outputs []string) error {
@@ -107,13 +134,7 @@ func (c *Client) ModelSetFromFile(name string, backend BackendType, device Devic
 
 // ModelRun runs a RedisAI model
 func (c *Client) ModelRun(name string, inputs []string, outputs []string) error {
-	args := redis.Args{}.Add(name)
-	if len(inputs) > 0 {
-		args = args.Add("INPUTS").AddFlat(inputs)
-	}
-	if len(outputs) > 0 {
-		args = args.Add("OUTPUTS").AddFlat(outputs)
-	}
+	args := ModelRunArgs(name, inputs, outputs, false)
 	conn := c.pool.Get()
 	defer conn.Close()
 
@@ -126,6 +147,28 @@ func (c *Client) ModelRun(name string, inputs []string, outputs []string) error 
 	}
 	return nil
 }
+
+
+// ModelRun runs a RedisAI model
+func (c *PipelinedClient) ModelRun(name string, inputs []string, outputs []string) (err error) {
+	args := ModelRunArgs(name, inputs, outputs, false)
+	if c.ActiveConn == nil {
+		c.ActiveConn = c.Pool.Get()
+		defer c.ActiveConn.Close()
+	}
+	err = c.ActiveConn.Send("AI.MODELRUN", args...)
+	if err != nil {
+		return err
+	}
+	// incremement the pipeline
+	// flush if required
+	err = c.pipeIncr(c.ActiveConn)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 
 // ScriptSet sets a RedisAI script from a blob
 func (c *Client) ScriptSet(name string, device DeviceType, data []byte) error {
@@ -176,25 +219,9 @@ func (c *Client) ScriptRun(name string, fn string, inputs []string, outputs []st
 
 // TensorSet sets a tensor
 func (c *Client) TensorSet(name string, dt DataType, dims []int, data interface{}) (err error) {
-	args := redis.Args{}.Add(name, dt).AddFlat(dims)
-	switch v := data.(type) {
-	case string:
-	case []byte:
-		args = args.Add("BLOB", v)
-	case []int:
-	case []int8:
-	case []int16:
-	case []int32:
-	case []int64:
-	case []uint:
-	case []uint16:
-	case []uint32:
-	case []uint64:
-	case []float32:
-	case []float64:
-		args = args.Add("VALUES").AddFlat(v)
-	default:
-		return fmt.Errorf("redisai.TensorSet: unknown type %T", v)
+	args := TensorSetArgs(name, dt, dims, data, false )
+	if args == nil {
+		return fmt.Errorf("redisai.TensorSet: unknown type %T",reflect.TypeOf(data))
 	}
 	conn := c.pool.Get()
 	defer conn.Close()
@@ -209,6 +236,62 @@ func (c *Client) TensorSet(name string, dt DataType, dims []int, data interface{
 	return nil
 }
 
+// TensorSet sets a tensor
+func (c *PipelinedClient) TensorSet(name string, dt DataType, dims []int, data interface{}) (err error) {
+	args := TensorSetArgs(name, dt, dims, data, false )
+	if args == nil {
+		return fmt.Errorf("redisai.TensorSet: unknown type %T",reflect.TypeOf(data))
+	}
+	if c.ActiveConn == nil {
+		c.ActiveConn = c.Pool.Get()
+		defer c.ActiveConn.Close()
+	}
+	err = c.ActiveConn.Send("AI.TENSORSET", args...)
+	if err != nil {
+		return err
+	}
+	// incremement the pipeline
+	// flush if required
+	err = c.pipeIncr(c.ActiveConn)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+func (c *PipelinedClient) pipeIncr(conn redis.Conn)  (err error) {
+	c.pipelinePos++
+	if c.pipelinePos > c.pipelineMaxSize {
+		err = conn.Flush()
+		c.pipelinePos = 0
+	}
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
+// TensorGetValues gets a tensor's values
+func (c *PipelinedClient) TensorGetValues(name string) (err error) {
+	args := redis.Args{}.Add(name, "VALUES")
+
+	if c.ActiveConn == nil {
+		c.ActiveConn = c.Pool.Get()
+		defer c.ActiveConn.Close()
+	}
+	err = c.ActiveConn.Send("AI.TENSORGET", args...)
+	if err != nil {
+		return err
+	}
+	// incremement the pipeline
+	// flush if required
+	err = c.pipeIncr(c.ActiveConn)
+	if err != nil {
+		return err
+	}
+	return nil
+}
+
 // TensorGetValues gets a tensor's values
 func (c *Client) TensorGetValues(name string) (dt DataType, shape []int, data []float64, err error) {
 	args := redis.Args{}.Add(name, "VALUES")
@@ -219,6 +302,67 @@ func (c *Client) TensorGetValues(name string) (dt DataType, shape []int, data []
 	if err != nil {
 		return
 	}
+	ProcessTensorResponse(err, rep, shape, data, dt)
+	return
+}
+
+func TensorSetArgs(name string, dt DataType, dims []int, data interface{}, includeCommandName bool ) redis.Args {
+	args := redis.Args{}
+	if includeCommandName {
+		args = args.Add( "AI.TENSORSET" )
+	}
+	args = args.Add(name, dt).AddFlat(dims)
+	var dtype = reflect.TypeOf(data)
+	switch dtype {
+	case reflect.TypeOf(([]byte)(nil)):
+		args = args.Add("BLOB", data)
+	case reflect.TypeOf((string)(nil)):
+		fallthrough
+	case reflect.TypeOf(([]int)(nil)):
+		fallthrough
+	case reflect.TypeOf(([]int8)(nil)):
+		fallthrough
+	case reflect.TypeOf(([]int16)(nil)):
+		fallthrough
+	case reflect.TypeOf(([]int32)(nil)):
+		fallthrough
+	case reflect.TypeOf(([]int64)(nil)):
+		fallthrough
+	case reflect.TypeOf(([]uint)(nil)):
+		fallthrough
+	case reflect.TypeOf(([]uint16)(nil)):
+		fallthrough
+	case reflect.TypeOf(([]uint32)(nil)):
+		fallthrough
+	case reflect.TypeOf(([]uint64)(nil)):
+		fallthrough
+	case reflect.TypeOf(([]float32)(nil)):
+		fallthrough
+	case reflect.TypeOf(([]float64)(nil)):
+		args = args.Add("VALUES").AddFlat(data)
+	default:
+		args = nil
+	}
+	return args
+}
+
+
+func ModelRunArgs(name string, inputs []string, outputs []string, includeCommandName bool) redis.Args {
+	args := redis.Args{}
+	if includeCommandName {
+		args = args.Add( "AI.MODELRUN" )
+	}
+	args = args.Add(name)
+	if len(inputs) > 0 {
+		args = args.Add("INPUTS").AddFlat(inputs)
+	}
+	if len(outputs) > 0 {
+		args = args.Add("OUTPUTS").AddFlat(outputs)
+	}
+	return args
+}
+
+func ProcessTensorResponse(err error, rep []interface{}, shape []int, data []float64, dt DataType) {
 
 	sdt, err := redis.String(rep[0], nil)
 	if err != nil {
@@ -232,7 +376,6 @@ func (c *Client) TensorGetValues(name string) (dt DataType, shape []int, data []
 	if err != nil {
 		return
 	}
-
 	switch sdt {
 	case "FLOAT":
 		dt = TypeFloat
