@@ -1,5 +1,9 @@
-[![license](https://img.shields.io/github/license/RediSearch/redisearch-go.svg)](https://github.com/RediSearch/redisearch-go)
-
+[![license](https://img.shields.io/github/license/RediSearch/redisearch-go.svg)](https://github.com/filipecosta90/redisai-go)
+[![CircleCI](https://circleci.com/gh/filipecosta90/redisai-go/tree/master.svg?style=svg)](https://circleci.com/gh/filipecosta90/redisai-go/tree/master)
+[![GitHub issues](https://img.shields.io/github/release/filipecosta90/redisai-go.svg)](https://github.com/filipecosta90/redisai-go/releases/latest)
+[![Codecov](https://codecov.io/gh/filipecosta90/redisai-go/branch/master/graph/badge.svg)](https://codecov.io/gh/filipecosta90/redisai-go)
+[![Go Report Card](https://goreportcard.com/badge/github.com/filipecosta90/redisai-go)](https://goreportcard.com/report/github.com/filipecosta90/redisai-go)
+[![GoDoc](https://godoc.org/github.com/filipecosta90/redisai-go?status.svg)](https://godoc.org/github.com/filipecosta90/redisai-go)
 
 # RedisAI Go Client
 
