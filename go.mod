@@ -1,4 +1,4 @@
-module github.com/itamarhaber/redisai-go
+module github.com/filipecosta90/redisai-go
 
 require (
 	github.com/chewxy/hm v1.0.0 // indirect
