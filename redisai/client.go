@@ -64,8 +64,8 @@ type Client struct {
 
 type PipelinedClient struct {
 	Pool            *redis.Pool
-	pipelineMaxSize int
-	pipelinePos     int
+	PipelineMaxSize int
+	PipelinePos     int
 	ActiveConn      redis.Conn
 }
 
@@ -91,13 +91,18 @@ func ConnectPipelined(url string, pipelineMax int ) (c *PipelinedClient) {
 			IdleTimeout: 240 * time.Second,
 			Dial:        func() (redis.Conn, error) { return redis.DialURL(url) },
 		},
-		pipelineMaxSize: pipelineMax,
-		pipelinePos: 0,
-		ActiveConn: nil,
+		PipelineMaxSize: pipelineMax,
+		PipelinePos:     0,
+		ActiveConn:      nil,
 	}
+	defer func() { if c.ActiveConn != nil { c.ActiveConn.Flush(); c.ActiveConn.Close() } }()
 	return c
 }
 
+// Close ensures that no connection is kept alive and prior to that we flush all db commands
+func (c *PipelinedClient) Close()  {
+	if c.ActiveConn != nil { c.ActiveConn.Flush(); c.ActiveConn.Close() }
+}
 
 
 // ModelSet sets a RedisAI model from a blob
@@ -244,7 +249,6 @@ func (c *PipelinedClient) TensorSet(name string, dt DataType, dims []int, data i
 	}
 	if c.ActiveConn == nil {
 		c.ActiveConn = c.Pool.Get()
-		defer c.ActiveConn.Close()
 	}
 	err = c.ActiveConn.Send("AI.TENSORSET", args...)
 	if err != nil {
@@ -259,11 +263,20 @@ func (c *PipelinedClient) TensorSet(name string, dt DataType, dims []int, data i
 	return nil
 }
 
+func (c *PipelinedClient) forceFlush()  (err error) {
+	err = nil
+	if c.ActiveConn != nil {
+		c.PipelinePos = 0
+		err = c.ActiveConn.Flush()
+	}
+return err
+}
+
 func (c *PipelinedClient) pipeIncr(conn redis.Conn)  (err error) {
-	c.pipelinePos++
-	if c.pipelinePos > c.pipelineMaxSize {
+	c.PipelinePos++
+	if c.PipelinePos >= c.PipelineMaxSize {
 		err = conn.Flush()
-		c.pipelinePos = 0
+		c.PipelinePos = 0
 	}
 	if err != nil {
 		return err
@@ -302,8 +315,7 @@ func (c *Client) TensorGetValues(name string) (dt DataType, shape []int, data []
 	if err != nil {
 		return
 	}
-	ProcessTensorResponse(err, rep, shape, data, dt)
-	return
+	return ProcessTensorResponse(rep)
 }
 
 func TensorSetArgs(name string, dt DataType, dims []int, data interface{}, includeCommandName bool ) redis.Args {
@@ -316,7 +328,7 @@ func TensorSetArgs(name string, dt DataType, dims []int, data interface{}, inclu
 	switch dtype {
 	case reflect.TypeOf(([]byte)(nil)):
 		args = args.Add("BLOB", data)
-	case reflect.TypeOf((string)(nil)):
+	case reflect.TypeOf((string)("")):
 		fallthrough
 	case reflect.TypeOf(([]int)(nil)):
 		fallthrough
@@ -362,7 +374,24 @@ func ModelRunArgs(name string, inputs []string, outputs []string, includeCommand
 	return args
 }
 
-func ProcessTensorResponse(err error, rep []interface{}, shape []int, data []float64, dt DataType) {
+
+func InterfaceSlice(slice interface{}) []interface{} {
+	s := reflect.ValueOf(slice)
+	if s.Kind() != reflect.Slice {
+		panic("InterfaceSlice() given a non-slice type")
+	}
+
+	ret := make([]interface{}, s.Len())
+
+	for i:=0; i<s.Len(); i++ {
+		ret[i] = s.Index(i).Interface()
+	}
+
+	return ret
+}
+
+func ProcessTensorResponse(respInitial interface{})( dt DataType, shape []int, data []float64, err error ) {
+	rep := InterfaceSlice(respInitial)
 
 	sdt, err := redis.String(rep[0], nil)
 	if err != nil {
