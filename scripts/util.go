@@ -1,4 +1,4 @@
-package main
+package scripts
 
 // func processImage(img gocv.Mat, height int) (cimg gocv.Mat) {
 // 	// Utility to resize a rectangular image to a padded square (letterbox) and normalize it
