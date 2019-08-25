@@ -43,7 +43,6 @@ func TestPipelineResetOnLimit(t *testing.T) {
 	}
 }
 
-
 func TestTensorGetValues(t *testing.T) {
 	pclient := ConnectPipelined("redis://localhost:6379", 3)
 	values := []float64{1.1, 2.2, 3.3, 4.4}
@@ -63,15 +62,15 @@ func TestTensorGetValues(t *testing.T) {
 	if pclient.PipelinePos != 2 {
 		t.Errorf("PipelinePos was incorrect, got: %d, want: %d.", pclient.PipelinePos, 2)
 	}
-	errorflush:= pclient.forceFlush()
+	errorflush := pclient.forceFlush()
 	if errorflush != nil {
 		t.Error(errortset)
 	}
 	if pclient.PipelinePos != 0 {
 		t.Errorf("PipelinePos was incorrect, got: %d, want: %d.", pclient.PipelinePos, 0)
 	}
-	 pclient.ActiveConn.Receive()
-	rep2 , _ := pclient.ActiveConn.Receive()
+	pclient.ActiveConn.Receive()
+	rep2, _ := pclient.ActiveConn.Receive()
 	dt, shape, data, errProc := ProcessTensorResponse(rep2)
 	if errProc != nil {
 		t.Error(errProc)
