@@ -139,7 +139,7 @@ func (c *PipelinedClient) TensorSet(name string, dt DataType, dims []int, data i
 	return nil
 }
 
-func (c *PipelinedClient) forceFlush() (err error) {
+func (c *PipelinedClient) ForceFlush() (err error) {
 	err = nil
 	if c.ActiveConn != nil {
 		c.PipelinePos = 0

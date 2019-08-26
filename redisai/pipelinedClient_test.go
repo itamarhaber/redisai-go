@@ -5,6 +5,7 @@ import (
 	"testing"
 )
 
+
 func TestPipelineIncr(t *testing.T) {
 	pclient := ConnectPipelined("redis://localhost:6379", 3)
 	defer pclient.Close()
@@ -63,7 +64,7 @@ func TestTensorGetValues(t *testing.T) {
 	if pclient.PipelinePos != 2 {
 		t.Errorf("PipelinePos was incorrect, got: %d, want: %d.", pclient.PipelinePos, 2)
 	}
-	errorflush := pclient.forceFlush()
+	errorflush := pclient.ForceFlush()
 	if errorflush != nil {
 		t.Error(errortset)
 	}
@@ -87,8 +88,8 @@ func TestTensorGetValues(t *testing.T) {
 	if dataFloat64s[0] != values[0] {
 		t.Errorf("TensorGetValues dt was incorrect, got: %f, want: %f.", dataFloat64s[0], values[0])
 	}
-
 }
+
 
 func TestTensorSetArgs(t *testing.T) {
 
