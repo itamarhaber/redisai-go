@@ -7,15 +7,29 @@ import (
 )
 
 type aiclient interface {
-	area() float64
-	perim() float64
+	LoadBackend(backend_identifier string, location string ) (err error)
+	TensorSet(name string, dt DataType, shape []int, data interface{}) (err error)
+	TensorGet(name string, ct TensorContentType) (data interface{}, err error)
+	ModelSet(name string, backend BackendType, device DeviceType, data []byte, inputs []string, outputs []string) error
+	ModelGet(name string) (data []byte, err error)
+	ModelDel(name string) (err error)
+	ModelRun(name string, inputs []string, outputs []string) error
+	ScriptSet(name string, device DeviceType, data []byte) error
+	ScriptGet(name string) (data []byte, err error)
+	ScriptDel(name string) (err error)
+	ScriptRun(name string, fn string, inputs []string, outputs []string) error
 }
+
 
 // DeviceType is a device type
 type DeviceType string
 
 // BackendType is a backend type
 type BackendType string
+
+
+// TensorContentType is a tensor content type
+type TensorContentType string
 
 // DataType is a data type
 type DataType string
@@ -57,6 +71,15 @@ const (
 	TypeFloat32 = DataType("FLOAT")
 	// TypeFloat64 is an alias for double
 	TypeFloat64 = DataType("DOUBLE")
+
+	// TensorContentTypeBLOB is an alias for BLOB tensor content
+	TensorContentTypeBlob  = TensorContentType("BLOB")
+
+	// TensorContentTypeBLOB is an alias for BLOB tensor content
+	TensorContentTypeValues  = TensorContentType("VALUES")
+
+	// TensorContentTypeBLOB is an alias for BLOB tensor content
+	TensorContentTypeMeta  = TensorContentType("META")
 )
 
 func TensorSetArgs(name string, dt DataType, dims []int, data interface{}, includeCommandName bool) redis.Args {
@@ -114,24 +137,13 @@ func ModelRunArgs(name string, inputs []string, outputs []string, includeCommand
 	return args
 }
 
-func InterfaceSlice(slice interface{}) []interface{} {
-	s := reflect.ValueOf(slice)
-	if s.Kind() != reflect.Slice {
-		panic("InterfaceSlice() given a non-slice type")
+
+func ParseTensorResponseMeta(respInitial interface{}) (dt DataType, shape []int, err error) {
+	rep,err := redis.Values(respInitial,err)
+	if len(rep) != 2{
+		err = fmt.Errorf("redisai.TensorGet: AI.TENSORGET returned response with incorrect sizing. expected '%d' got '%d'", 2, len(rep))
+		return
 	}
-
-	ret := make([]interface{}, s.Len())
-
-	for i := 0; i < s.Len(); i++ {
-		ret[i] = s.Index(i).Interface()
-	}
-
-	return ret
-}
-
-func ProcessTensorResponse(respInitial interface{}) (dt DataType, shape []int, data []float64, err error) {
-	rep := InterfaceSlice(respInitial)
-
 	sdt, err := redis.String(rep[0], nil)
 	if err != nil {
 		return
@@ -140,7 +152,98 @@ func ProcessTensorResponse(respInitial interface{}) (dt DataType, shape []int, d
 	if err != nil {
 		return
 	}
-	data, err = redis.Float64s(rep[2], nil)
+	switch sdt {
+	case "FLOAT":
+		dt = TypeFloat
+	case "DOUBLE":
+		dt = TypeDouble
+	case "INT8":
+		dt = TypeInt8
+	case "INT16":
+		dt = TypeInt16
+	case "INT32":
+		dt = TypeInt32
+	case "INT64":
+		dt = TypeInt64
+	case "UINT8":
+		dt = TypeUint8
+	case "UINT16":
+		dt = TypeUint16
+	case "UINT32":
+		dt = TypeUint32
+	case "UINT64":
+		dt = TypeUint64
+	default:
+		err = fmt.Errorf("redisai.TensorGet: AI.TENSORGET returned unknown type '%s'", sdt)
+		return
+	}
+	return
+}
+
+func ParseTensorResponseValues(respInitial interface{}) (dt DataType, shape []int, data interface{}, err error) {
+	rep,err := redis.Values(respInitial,err)
+	if len(rep) != 3{
+		err = fmt.Errorf("redisai.TensorGet: AI.TENSORGET returned response with incorrect sizing. expected '%d' got '%d'", 3,  len(rep))
+		return
+	}
+	sdt, err := redis.String(rep[0], nil)
+	if err != nil {
+		return
+	}
+	shape, err = redis.Ints(rep[1], nil)
+	if err != nil {
+		return
+	}
+	data, err = redis.Values(rep[2], nil)
+	if err != nil {
+		return
+	}
+	switch sdt {
+	case "FLOAT":
+		dt = TypeFloat
+	case "DOUBLE":
+		dt = TypeDouble
+	case "INT8":
+		dt = TypeInt8
+	case "INT16":
+		dt = TypeInt16
+	case "INT32":
+		dt = TypeInt32
+	case "INT64":
+		dt = TypeInt64
+	case "UINT8":
+		dt = TypeUint8
+	case "UINT16":
+		dt = TypeUint16
+	case "UINT32":
+		dt = TypeUint32
+	case "UINT64":
+		dt = TypeUint64
+	default:
+		err = fmt.Errorf("redisai.TensorGet: AI.TENSORGET returned unknown type '%s'", sdt)
+		return
+	}
+	return
+}
+
+
+
+
+func ParseTensorResponseBlob(respInitial interface{}) (dt DataType, shape []int, data []byte, err error) {
+	rep,err := redis.Values(respInitial,err)
+	if len(rep) != 3{
+		err = fmt.Errorf("redisai.TensorGet: AI.TENSORGET returned response with incorrect sizing. expected '%d' got '%d'", 3, len(rep))
+		return
+	}
+	sdt, err := redis.String(rep[0], nil)
+	if err != nil {
+		return
+	}
+	shape, err = redis.Ints(rep[1], nil)
+	if err != nil {
+		return
+	}
+	data, err = redis.Bytes(rep[2], nil)
 	if err != nil {
 		return
 	}

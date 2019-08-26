@@ -1,6 +1,7 @@
 package redisai
 
 import (
+	"github.com/garyburd/redigo/redis"
 	"testing"
 )
 
@@ -71,7 +72,7 @@ func TestTensorGetValues(t *testing.T) {
 	}
 	pclient.ActiveConn.Receive()
 	rep2, _ := pclient.ActiveConn.Receive()
-	dt, shape, data, errProc := ProcessTensorResponse(rep2)
+	dt, shape, data, errProc := ParseTensorResponseValues(rep2)
 	if errProc != nil {
 		t.Error(errProc)
 	}
@@ -81,8 +82,10 @@ func TestTensorGetValues(t *testing.T) {
 	if shape[0] != shp[0] {
 		t.Errorf("TensorGetValues shape[0] was incorrect, got: %d, want: %d.", shape[0], shp[0])
 	}
-	if data[0] != values[0] {
-		t.Errorf("TensorGetValues dt was incorrect, got: %f, want: %f.", data[0], values[0])
+	var err error = nil
+	dataFloat64s, err := redis.Float64s(data, err)
+	if dataFloat64s[0] != values[0] {
+		t.Errorf("TensorGetValues dt was incorrect, got: %f, want: %f.", dataFloat64s[0], values[0])
 	}
 
 }

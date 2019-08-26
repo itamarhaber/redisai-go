@@ -15,6 +15,59 @@ type PipelinedClient struct {
 	ActiveConn      redis.Conn
 }
 
+func (c *PipelinedClient) TensorGet(name string, ct TensorContentType) (data interface{}, err error) {
+	data = nil
+	args := redis.Args{}.Add(name, ct)
+
+	if c.ActiveConn == nil {
+		c.ActiveConn = c.Pool.Get()
+		defer c.ActiveConn.Close()
+	}
+	err = c.ActiveConn.Send("AI.TENSORGET", args...)
+	if err != nil {
+		return data, err
+	}
+	// incremement the pipeline
+	// flush if required
+	err = c.pipeIncr(c.ActiveConn)
+	if err != nil {
+		return data, err
+	}
+	return data, nil
+}
+
+func (c *PipelinedClient) ModelSet(name string, backend BackendType, device DeviceType, data []byte, inputs []string, outputs []string) error {
+	panic("implement me")
+}
+
+func (c *PipelinedClient) ScriptSet(name string, device DeviceType, data []byte) error {
+	panic("implement me")
+}
+
+func (c *PipelinedClient) ScriptRun(name string, fn string, inputs []string, outputs []string) error {
+	panic("implement me")
+}
+
+func (c *PipelinedClient) ModelGet(name string) (data []byte, err error) {
+	panic("implement me")
+}
+
+func (c *PipelinedClient) ModelDel(name string) (err error) {
+	panic("implement me")
+}
+
+func (c *PipelinedClient) ScriptGet(name string) (data []byte, err error) {
+	panic("implement me")
+}
+
+func (c *PipelinedClient) ScriptDel(name string) (err error) {
+	panic("implement me")
+}
+
+func (c *PipelinedClient) LoadBackend(backend_identifier string, location string) (err error) {
+	panic("implement me")
+}
+
 // ConnectPipelined intializes a Client with pipeline enabled by default
 func ConnectPipelined(url string, pipelineMax int) (c *PipelinedClient) {
 	c = &PipelinedClient{
@@ -109,7 +162,7 @@ func (c *PipelinedClient) pipeIncr(conn redis.Conn) (err error) {
 
 // TensorGetValues gets a tensor's values
 func (c *PipelinedClient) TensorGetValues(name string) (err error) {
-	args := redis.Args{}.Add(name, "VALUES")
+	args := redis.Args{}.Add(name, TensorContentTypeValues)
 
 	if c.ActiveConn == nil {
 		c.ActiveConn = c.Pool.Get()

@@ -14,6 +14,75 @@ type Client struct {
 	pool *redis.Pool
 }
 
+func (c *Client) TensorGet(name string, ct TensorContentType) (data interface{}, err error) {
+	args := redis.Args{}.Add(name, ct)
+	conn := c.pool.Get()
+	defer conn.Close()
+	data, err = conn.Do("AI.TENSORGET", args...)
+	return
+}
+
+// TensorGetValues gets a tensor's values
+func (c *Client) TensorGetValues(name string) (dt DataType, shape []int, data interface{}, err error) {
+	args := redis.Args{}.Add(name, TensorContentTypeValues)
+	conn := c.pool.Get()
+	defer conn.Close()
+
+	rep, err := conn.Do("AI.TENSORGET", args...)
+	if err != nil {
+		return
+	}
+	return ParseTensorResponseValues(rep)
+}
+
+
+// TensorGetValues gets a tensor's values
+func (c *Client) TensorGetMeta(name string) (dt DataType, shape []int, err error) {
+	args := redis.Args{}.Add(name, TensorContentTypeMeta)
+	conn := c.pool.Get()
+	defer conn.Close()
+
+	rep, err := conn.Do("AI.TENSORGET", args...)
+	if err != nil {
+		return
+	}
+	return ParseTensorResponseMeta(rep)
+}
+
+// TensorGetValues gets a tensor's values
+func (c *Client) TensorGetBlob(name string) (dt DataType, shape []int,data []byte, err error) {
+	args := redis.Args{}.Add(name, TensorContentTypeBlob)
+	conn := c.pool.Get()
+	defer conn.Close()
+
+	rep, err := conn.Do("AI.TENSORGET", args...)
+	if err != nil {
+		return
+	}
+	return ParseTensorResponseBlob(rep)
+}
+
+
+func (c *Client) ModelGet(name string) (data []byte, err error) {
+	panic("implement me")
+}
+
+func (c *Client) ModelDel(name string) (err error) {
+	panic("implement me")
+}
+
+func (c *Client) ScriptGet(name string) (data []byte, err error) {
+	panic("implement me")
+}
+
+func (c *Client) ScriptDel(name string) (err error) {
+	panic("implement me")
+}
+
+func (c *Client)  LoadBackend(backend_identifier string, location string ) (err error) {
+	panic("implement me")
+}
+
 // Connect intializes a Client
 func Connect(url string) (c *Client) {
 	c = &Client{
@@ -25,6 +94,7 @@ func Connect(url string) (c *Client) {
 	}
 	return c
 }
+
 
 // ModelSet sets a RedisAI model from a blob
 func (c *Client) ModelSet(name string, backend BackendType, device DeviceType, data []byte, inputs []string, outputs []string) error {
@@ -138,17 +208,4 @@ func (c *Client) TensorSet(name string, dt DataType, dims []int, data interface{
 		return fmt.Errorf("redisai.TensorSet: AI.TENSORSET returned '%s'", rep)
 	}
 	return nil
-}
-
-// TensorGetValues gets a tensor's values
-func (c *Client) TensorGetValues(name string) (dt DataType, shape []int, data []float64, err error) {
-	args := redis.Args{}.Add(name, "VALUES")
-	conn := c.pool.Get()
-	defer conn.Close()
-
-	rep, err := redis.MultiBulk(conn.Do("AI.TENSORGET", args...))
-	if err != nil {
-		return
-	}
-	return ProcessTensorResponse(rep)
 }

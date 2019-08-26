@@ -12,7 +12,7 @@ Go client for [RedisAI](http://redisai.io), based on redigo.
 # Installing 
 
 ```sh
-go get github.com/itamarhaber/redisai-go/redisai
+go get github.com/filipecosta90/redisai-go/redisai
 ```
 
 # Usage Example
@@ -22,7 +22,7 @@ go get github.com/itamarhaber/redisai-go/redisai
 import (
 	"fmt"
 	"log"
-	"github.com/itamarhaber/redisai-go/redisai"
+	"github.com/filipecosta90/redisai-go/redisai"
 )
 
 func ExampleClient() {
