@@ -7,7 +7,7 @@ import (
 
 
 func TestPipelineIncr(t *testing.T) {
-	pclient := ConnectPipelined("redis://localhost:6379", 3)
+	pclient := ConnectPipelined("redis://localhost:6379", 3, nil )
 	defer pclient.Close()
 	errortset := pclient.TensorSet("test:TestPipelineIncr:1", TypeFloat, []int{1}, []float32{1})
 	if errortset != nil {
@@ -19,7 +19,7 @@ func TestPipelineIncr(t *testing.T) {
 }
 
 func TestPipelineResetOnLimit(t *testing.T) {
-	pclient := ConnectPipelined("redis://localhost:6379", 3)
+	pclient := ConnectPipelined("redis://localhost:6379", 3, nil )
 	defer pclient.Close()
 	errortset := pclient.TensorSet("test:TestPipelineResetOnLimit:1", TypeFloat, []int{4}, []float32{1.1, 2.2, 3.3, 4.4})
 	if errortset != nil {
@@ -46,7 +46,7 @@ func TestPipelineResetOnLimit(t *testing.T) {
 }
 
 func TestTensorGetValues(t *testing.T) {
-	pclient := ConnectPipelined("redis://localhost:6379", 3)
+	pclient := ConnectPipelined("redis://localhost:6379", 3, nil )
 	values := []float64{1.1, 2.2, 3.3, 4.4}
 	shp := []int{4}
 	defer pclient.Close()

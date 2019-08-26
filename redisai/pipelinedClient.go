@@ -69,13 +69,21 @@ func (c *PipelinedClient) LoadBackend(backend_identifier string, location string
 }
 
 // ConnectPipelined intializes a Client with pipeline enabled by default
-func ConnectPipelined(url string, pipelineMax int) (c *PipelinedClient) {
-	c = &PipelinedClient{
-		Pool: &redis.Pool{
+func ConnectPipelined(url string, pipelineMax int, pool *redis.Pool) (c *PipelinedClient) {
+
+	var cpool *redis.Pool = nil
+	if pool == nil {
+		cpool = &redis.Pool{
 			MaxIdle:     3,
 			IdleTimeout: 240 * time.Second,
 			Dial:        func() (redis.Conn, error) { return redis.DialURL(url) },
-		},
+		}
+	} else {
+		cpool = pool
+	}
+
+	c = &PipelinedClient{
+		Pool: cpool,
 		PipelineMaxSize: pipelineMax,
 		PipelinePos:     0,
 		ActiveConn:      nil,

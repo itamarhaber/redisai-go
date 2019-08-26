@@ -84,13 +84,20 @@ func (c *Client)  LoadBackend(backend_identifier string, location string ) (err 
 }
 
 // Connect intializes a Client
-func Connect(url string) (c *Client) {
-	c = &Client{
-		pool: &redis.Pool{
+func Connect(url string, pool *redis.Pool ) (c *Client) {
+	var cpool *redis.Pool = nil
+	if pool == nil {
+		cpool = &redis.Pool{
 			MaxIdle:     3,
 			IdleTimeout: 240 * time.Second,
 			Dial:        func() (redis.Conn, error) { return redis.DialURL(url) },
-		},
+		}
+	} else {
+		cpool = pool
+	}
+
+	c = &Client{
+		pool: cpool,
 	}
 	return c
 }
