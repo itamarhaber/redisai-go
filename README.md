@@ -32,7 +32,7 @@ func ExampleClient() {
 
 	// Set a tensor
 	// AI.TENSORSET foo FLOAT 2 2 VALUES 1 2 3 4
-	client.TensorSet( "foo" , TypeFloat, []int{2,2}, []int{1,2,3,4} )
+	client.TensorSet( "foo" , TypeFloat, []int{2,2}, []float32{1,2,3,4} )
 	
 	// Get a tensor content as a slice of values
 	// returned in format
