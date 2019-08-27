@@ -64,7 +64,7 @@ func (c *PipelinedClient) ScriptDel(name string) (err error) {
 	panic("implement me")
 }
 
-func (c *PipelinedClient) LoadBackend(backend_identifier string, location string) (err error) {
+func (c *PipelinedClient) LoadBackend(backendIdentifier string, location string) (err error) {
 	panic("implement me")
 }
 
@@ -83,7 +83,7 @@ func ConnectPipelined(url string, pipelineMax int, pool *redis.Pool) (c *Pipelin
 	}
 
 	c = &PipelinedClient{
-		Pool: cpool,
+		Pool:            cpool,
 		PipelineMaxSize: pipelineMax,
 		PipelinePos:     0,
 		ActiveConn:      nil,
@@ -98,11 +98,19 @@ func ConnectPipelined(url string, pipelineMax int, pool *redis.Pool) (c *Pipelin
 }
 
 // Close ensures that no connection is kept alive and prior to that we flush all db commands
-func (c *PipelinedClient) Close() {
+func (c *PipelinedClient) Close() (err error) {
 	if c.ActiveConn != nil {
-		c.ActiveConn.Flush()
-		c.ActiveConn.Close()
+		err = c.ActiveConn.Flush()
+		if err != nil {
+			return
+		}
+		err = c.ActiveConn.Close()
+		if err != nil {
+			return
+		}
 	}
+
+	return
 }
 
 // ModelRun runs a RedisAI model

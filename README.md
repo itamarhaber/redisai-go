@@ -28,14 +28,14 @@ import (
 func ExampleClient() {
 
 	// Create a client. 
-	client := redisai.Connect("localhost:6379")
+	client := redisai.Connect("localhost:6379", nil )
 
 	// Set a tensor
 	// AI.TENSORSET foo FLOAT 2 2 VALUES 1 2 3 4
 	client.TensorSet( "foo" , TypeFloat, []int{2,2}, []int{1,2,3,4} )
 	
 	// Get a tensor content as a slice of values
-	err, _, _, fooTensorValues, _ := client.TensorGetValues("foo" )
+	err, _, _, fooTensorValues, _ := client.TensorGetValues( "foo" )
 
 	if err != nil {
 		log.Fatal(err)

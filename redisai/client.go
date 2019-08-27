@@ -35,7 +35,6 @@ func (c *Client) TensorGetValues(name string) (dt DataType, shape []int, data in
 	return ParseTensorResponseValues(rep)
 }
 
-
 // TensorGetValues gets a tensor's values
 func (c *Client) TensorGetMeta(name string) (dt DataType, shape []int, err error) {
 	args := redis.Args{}.Add(name, TensorContentTypeMeta)
@@ -50,7 +49,7 @@ func (c *Client) TensorGetMeta(name string) (dt DataType, shape []int, err error
 }
 
 // TensorGetValues gets a tensor's values
-func (c *Client) TensorGetBlob(name string) (dt DataType, shape []int,data []byte, err error) {
+func (c *Client) TensorGetBlob(name string) (dt DataType, shape []int, data []byte, err error) {
 	args := redis.Args{}.Add(name, TensorContentTypeBlob)
 	conn := c.pool.Get()
 	defer conn.Close()
@@ -61,7 +60,6 @@ func (c *Client) TensorGetBlob(name string) (dt DataType, shape []int,data []byt
 	}
 	return ParseTensorResponseBlob(rep)
 }
-
 
 func (c *Client) ModelGet(name string) (data []byte, err error) {
 	panic("implement me")
@@ -79,12 +77,12 @@ func (c *Client) ScriptDel(name string) (err error) {
 	panic("implement me")
 }
 
-func (c *Client)  LoadBackend(backend_identifier string, location string ) (err error) {
+func (c *Client) LoadBackend(backend_identifier string, location string) (err error) {
 	panic("implement me")
 }
 
 // Connect intializes a Client
-func Connect(url string, pool *redis.Pool ) (c *Client) {
+func Connect(url string, pool *redis.Pool) (c *Client) {
 	var cpool *redis.Pool = nil
 	if pool == nil {
 		cpool = &redis.Pool{
@@ -101,7 +99,6 @@ func Connect(url string, pool *redis.Pool ) (c *Client) {
 	}
 	return c
 }
-
 
 // ModelSet sets a RedisAI model from a blob
 func (c *Client) ModelSet(name string, backend BackendType, device DeviceType, data []byte, inputs []string, outputs []string) error {

@@ -7,7 +7,7 @@ import (
 )
 
 type aiclient interface {
-	LoadBackend(backend_identifier string, location string ) (err error)
+	LoadBackend(backend_identifier string, location string) (err error)
 	TensorSet(name string, dt DataType, shape []int, data interface{}) (err error)
 	TensorGet(name string, ct TensorContentType) (data interface{}, err error)
 	ModelSet(name string, backend BackendType, device DeviceType, data []byte, inputs []string, outputs []string) error
@@ -20,13 +20,11 @@ type aiclient interface {
 	ScriptRun(name string, fn string, inputs []string, outputs []string) error
 }
 
-
 // DeviceType is a device type
 type DeviceType string
 
 // BackendType is a backend type
 type BackendType string
-
 
 // TensorContentType is a tensor content type
 type TensorContentType string
@@ -73,13 +71,13 @@ const (
 	TypeFloat64 = DataType("DOUBLE")
 
 	// TensorContentTypeBLOB is an alias for BLOB tensor content
-	TensorContentTypeBlob  = TensorContentType("BLOB")
+	TensorContentTypeBlob = TensorContentType("BLOB")
 
 	// TensorContentTypeBLOB is an alias for BLOB tensor content
-	TensorContentTypeValues  = TensorContentType("VALUES")
+	TensorContentTypeValues = TensorContentType("VALUES")
 
 	// TensorContentTypeBLOB is an alias for BLOB tensor content
-	TensorContentTypeMeta  = TensorContentType("META")
+	TensorContentTypeMeta = TensorContentType("META")
 )
 
 func TensorSetArgs(name string, dt DataType, dims []int, data interface{}, includeCommandName bool) redis.Args {
@@ -92,7 +90,7 @@ func TensorSetArgs(name string, dt DataType, dims []int, data interface{}, inclu
 	switch dtype {
 	case reflect.TypeOf(([]byte)(nil)):
 		args = args.Add("BLOB", data)
-	case reflect.TypeOf((string)("")):
+	case reflect.TypeOf(""):
 		fallthrough
 	case reflect.TypeOf(([]int)(nil)):
 		fallthrough
@@ -137,10 +135,9 @@ func ModelRunArgs(name string, inputs []string, outputs []string, includeCommand
 	return args
 }
 
-
 func ParseTensorResponseMeta(respInitial interface{}) (dt DataType, shape []int, err error) {
-	rep,err := redis.Values(respInitial,err)
-	if len(rep) != 2{
+	rep, err := redis.Values(respInitial, err)
+	if len(rep) != 2 {
 		err = fmt.Errorf("redisai.TensorGet: AI.TENSORGET returned response with incorrect sizing. expected '%d' got '%d'", 2, len(rep))
 		return
 	}
@@ -181,9 +178,9 @@ func ParseTensorResponseMeta(respInitial interface{}) (dt DataType, shape []int,
 }
 
 func ParseTensorResponseValues(respInitial interface{}) (dt DataType, shape []int, data interface{}, err error) {
-	rep,err := redis.Values(respInitial,err)
-	if len(rep) != 3{
-		err = fmt.Errorf("redisai.TensorGet: AI.TENSORGET returned response with incorrect sizing. expected '%d' got '%d'", 3,  len(rep))
+	rep, err := redis.Values(respInitial, err)
+	if len(rep) != 3 {
+		err = fmt.Errorf("redisai.TensorGet: AI.TENSORGET returned response with incorrect sizing. expected '%d' got '%d'", 3, len(rep))
 		return
 	}
 	sdt, err := redis.String(rep[0], nil)
@@ -226,12 +223,9 @@ func ParseTensorResponseValues(respInitial interface{}) (dt DataType, shape []in
 	return
 }
 
-
-
-
 func ParseTensorResponseBlob(respInitial interface{}) (dt DataType, shape []int, data []byte, err error) {
-	rep,err := redis.Values(respInitial,err)
-	if len(rep) != 3{
+	rep, err := redis.Values(respInitial, err)
+	if len(rep) != 3 {
 		err = fmt.Errorf("redisai.TensorGet: AI.TENSORGET returned response with incorrect sizing. expected '%d' got '%d'", 3, len(rep))
 		return
 	}
