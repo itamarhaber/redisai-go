@@ -1,6 +1,8 @@
 package redisai
 
 import (
+	"bytes"
+	"encoding/binary"
 	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"reflect"
@@ -88,6 +90,8 @@ func TensorSetArgs(name string, dt DataType, dims []int, data interface{}, inclu
 	args = args.Add(name, dt).AddFlat(dims)
 	var dtype = reflect.TypeOf(data)
 	switch dtype {
+	case reflect.TypeOf(([]uint8)(nil)):
+		fallthrough
 	case reflect.TypeOf(([]byte)(nil)):
 		args = args.Add("BLOB", data)
 	case reflect.TypeOf(""):
@@ -266,5 +270,12 @@ func ParseTensorResponseBlob(respInitial interface{}) (dt DataType, shape []int,
 		err = fmt.Errorf("redisai.TensorGet: AI.TENSORGET returned unknown type '%s'", sdt)
 		return
 	}
+	return
+}
+
+func float32ToByte(f float32) ( converted []byte ,err error )  {
+	var buf bytes.Buffer
+	err = binary.Write(&buf, binary.BigEndian, f)
+	converted = buf.Bytes()
 	return
 }

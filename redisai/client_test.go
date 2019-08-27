@@ -489,6 +489,7 @@ func TestClient_TensorGetValues(t *testing.T) {
 }
 
 func TestClient_TensorSet(t *testing.T) {
+	pclient := Connect("redis://localhost:6379",  nil )
 	type fields struct {
 		pool *redis.Pool
 	}
@@ -498,13 +499,15 @@ func TestClient_TensorSet(t *testing.T) {
 		dims []int
 		data interface{}
 	}
+
 	tests := []struct {
 		name    string
 		fields  fields
 		args    args
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{ "test:TestPipelineIncr:1", fields{ pclient.pool } , args{ "test:TestPipelineIncr:1", TypeFloat, []int{1}, []float32{1} }, false },
+		{ "test:TestPipelineIncr:1:FaultyDims", fields{ pclient.pool } , args{ "test:TestPipelineIncr:1", TypeFloat, []int{1,10}, []float32{1} }, true },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
