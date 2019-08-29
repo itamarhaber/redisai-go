@@ -62,23 +62,79 @@ func (c *Client) TensorGetBlob(name string) (dt DataType, shape []int, data []by
 }
 
 func (c *Client) ModelGet(name string) (data []byte, err error) {
-	panic("implement me")
+	args := redis.Args{}.Add(name)
+	conn := c.pool.Get()
+	defer conn.Close()
+	respInitial, err := conn.Do("AI.MODELGET", args...)
+	if err != nil {
+		return
+	}
+	rep, err := redis.Values(respInitial, err)
+	if len(rep) != 3 {
+		err = fmt.Errorf("redisai.ModelGet: AI.MODELGET returned response with incorrect sizing. expected '%d' got '%d'", 3, len(rep))
+		return
+	}
+	data, err = redis.Bytes(rep[2], nil)
+	if err != nil {
+		return
+	}
+	return
 }
 
 func (c *Client) ModelDel(name string) (err error) {
-	panic("implement me")
+	args := redis.Args{}.Add(name)
+	conn := c.pool.Get()
+	defer conn.Close()
+	_, err = conn.Do("AI.MODELDEL", args...)
+	return
 }
 
 func (c *Client) ScriptGet(name string) (data []byte, err error) {
-	panic("implement me")
+	args := redis.Args{}.Add(name)
+	conn := c.pool.Get()
+	defer conn.Close()
+	respInitial, err := conn.Do("AI.SCRIPTGET", args...)
+	if err != nil {
+		return
+	}
+	rep, err := redis.Values(respInitial, err)
+	if len(rep) != 3 {
+		err = fmt.Errorf("redisai.ScriptGet: AI.SCRIPTGET returned response with incorrect sizing. expected '%d' got '%d'", 3, len(rep))
+		return
+	}
+	data, err = redis.Bytes(rep[2], nil)
+	if err != nil {
+		return
+	}
+	return
 }
 
 func (c *Client) ScriptDel(name string) (err error) {
-	panic("implement me")
+	args := redis.Args{}.Add(name)
+	conn := c.pool.Get()
+	defer conn.Close()
+	rep, err := redis.String(conn.Do("AI.SCRIPTDEL", args...))
+	if err != nil {
+		return err
+	}
+	if rep != "OK" {
+		return fmt.Errorf("redisai.ScriptDel: AI.SCRIPTDEL returned '%s'", rep)
+	}
+	return
 }
 
-func (c *Client) LoadBackend(backend_identifier string, location string) (err error) {
-	panic("implement me")
+func (c *Client) LoadBackend(backend_identifier BackendType, location string) (err error) {
+	args := redis.Args{}.Add("LOADBACKEND").Add(backend_identifier).Add(location)
+	conn := c.pool.Get()
+	defer conn.Close()
+	rep, err := redis.String(conn.Do("AI.CONFIG", args...))
+	if err != nil {
+		return err
+	}
+	if rep != "OK" {
+		return fmt.Errorf("redisai.LoadBackend: AI.CONFIG LOADBACKEND returned '%s'", rep)
+	}
+	return
 }
 
 // Connect intializes a Client

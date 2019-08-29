@@ -11,7 +11,7 @@ func TestClient_LoadBackend(t *testing.T) {
 		pool *redis.Pool
 	}
 	type args struct {
-		backend_identifier string
+		backend_identifier BackendType
 		location           string
 	}
 	tests := []struct {
