@@ -31,7 +31,7 @@ func (c *Client) TensorGet(name string, ct TensorContentType) (data []interface{
 
 
 // TensorGetValues gets a tensor's values
-func (c *Client) TensorGetValues(name string) (dt DataType, shape []int, data []interface{}, err error) {
+func (c *Client) TensorGetValues(name string) (dt DataType, shape []int, data interface{}, err error) {
 	args := redis.Args{}.Add(name, TensorContentTypeValues)
 	conn := c.pool.Get()
 	defer conn.Close()
@@ -48,7 +48,7 @@ func (c *Client) TensorGetValues(name string) (dt DataType, shape []int, data []
 	if err != nil {
 		return
 	}
-	return resp[0].(DataType), resp[1].([]int), resp[2].([]interface{}), err
+	return resp[0].(DataType), resp[1].([]int), resp[2], err
 }
 
 // TensorGetValues gets a tensor's values

@@ -487,6 +487,8 @@ func TestClient_TensorGetMeta(t *testing.T) {
 		wantErr   bool
 	}{
 		// TODO: Add test cases.
+
+
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -509,6 +511,39 @@ func TestClient_TensorGetMeta(t *testing.T) {
 }
 
 func TestClient_TensorGetValues(t *testing.T) {
+
+	valuesFloat32 := []float32{1.1}
+	valuesFloat64 := []float64{1.1}
+
+	valuesInt8 := []int8{1}
+	valuesInt16 := []int16{1}
+	valuesInt32 := []int{1}
+	valuesInt64 := []int64{1}
+
+	valuesUint8 := []uint8{1}
+	valuesUint16 := []uint16{1}
+	keyFloat32 := "test:TensorGet:TypeFloat32:1"
+	keyFloat64 := "test:TensorGet:TypeFloat64:1"
+
+	keyInt8 := "test:TensorGet:TypeInt8:1"
+	keyInt16 := "test:TensorGet:TypeInt16:1"
+	keyInt32 := "test:TensorGet:TypeInt32:1"
+	keyInt64 := "test:TensorGet:TypeInt64:1"
+
+	keyUint8 := "test:TensorGet:TypeUint8:1"
+	keyUint16 := "test:TensorGet:TypeUint16:1"
+	shp := []int{1}
+	pclient.TensorSet(keyFloat32, TypeFloat32, shp, valuesFloat32)
+	pclient.TensorSet(keyFloat64, TypeFloat64, shp, valuesFloat64)
+
+	pclient.TensorSet(keyInt8, TypeInt8, shp, valuesInt8)
+	pclient.TensorSet(keyInt16, TypeInt16, shp, valuesInt16)
+	pclient.TensorSet(keyInt32, TypeInt32, shp, valuesInt32)
+	pclient.TensorSet(keyInt64, TypeInt64, shp, valuesInt64)
+
+	pclient.TensorSet(keyUint8, TypeUint8, shp, valuesUint8)
+	pclient.TensorSet(keyUint16, TypeUint16, shp, valuesUint16)
+
 	type fields struct {
 		pool *redis.Pool
 	}
@@ -524,6 +559,14 @@ func TestClient_TensorGetValues(t *testing.T) {
 		wantData  interface{}
 		wantErr   bool
 	}{
+		{ keyFloat32, fields{ pclient.pool } , args{ keyFloat32 }, TypeFloat32,shp,valuesFloat32, false},
+		{ keyFloat64, fields{ pclient.pool } , args{ keyFloat64 }, TypeFloat64,shp,valuesFloat64,  false},
+
+		{ keyInt8, fields{ pclient.pool } , args{ keyInt8 }, TypeInt8,shp,valuesInt8,false},
+		{ keyInt16, fields{ pclient.pool } , args{ keyInt16 }, TypeInt16,shp,valuesInt16, false},
+		{ keyInt32, fields{ pclient.pool } , args{ keyInt32 }, TypeInt32,shp,valuesInt32,  false},
+		{ keyInt64, fields{ pclient.pool } , args{ keyInt64 }, TypeInt64,shp,valuesInt64,  false},
+
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
