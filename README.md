@@ -32,10 +32,11 @@ func ExampleClient() {
 
 	// Set a tensor
 	// AI.TENSORSET foo FLOAT 2 2 VALUES 1 2 3 4
-	client.TensorSet( "foo" , TypeFloat, []int{2,2}, []int{1,2,3,4} )
+	client.TensorSet( "foo" , TypeFloat, []int{2,2}, []float32{1.1,2.2,3.3,4.4} )
 	
 	// Get a tensor content as a slice of values
-	err, _, _, fooTensorValues, _ := client.TensorGetValues( "foo" )
+    // dt DataType, shape []int, data interface{}, err error
+    _, _, fooTensorValues, err := client.TensorGetValues( "foo" )
 
 	if err != nil {
 		log.Fatal(err)
