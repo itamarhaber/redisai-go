@@ -44,51 +44,51 @@ func TestPipelineResetOnLimit(t *testing.T) {
 		t.Errorf("PipelinePos was incorrect, got: %d, want: %d.", pclient.PipelinePos, 0)
 	}
 }
-
-func TestTensorGetValues(t *testing.T) {
-	pclient := ConnectPipelined("redis://localhost:6379", 3, nil)
-	values := []float64{1.1, 2.2, 3.3, 4.4}
-	shp := []int{4}
-	defer pclient.Close()
-	errortset := pclient.TensorSet("test:TensorGetValues:tensor1", TypeFloat64, shp, values)
-	if errortset != nil {
-		t.Error(errortset)
-	}
-	if pclient.PipelinePos != 1 {
-		t.Errorf("PipelinePos was incorrect, got: %d, want: %d.", pclient.PipelinePos, 1)
-	}
-	errortget := pclient.TensorGetValues("test:TensorGetValues:tensor1")
-	if errortget != nil {
-		t.Error(errortget)
-	}
-	if pclient.PipelinePos != 2 {
-		t.Errorf("PipelinePos was incorrect, got: %d, want: %d.", pclient.PipelinePos, 2)
-	}
-	errorflush := pclient.ForceFlush()
-	if errorflush != nil {
-		t.Error(errortset)
-	}
-	if pclient.PipelinePos != 0 {
-		t.Errorf("PipelinePos was incorrect, got: %d, want: %d.", pclient.PipelinePos, 0)
-	}
-	pclient.ActiveConn.Receive()
-	rep2, _ := pclient.ActiveConn.Receive()
-	dt, shape, data, errProc := ParseTensorResponseValues(rep2)
-	if errProc != nil {
-		t.Error(errProc)
-	}
-	if dt != TypeFloat64 {
-		t.Errorf("TensorGetValues dt was incorrect, got: %s, want: %s.", dt, TypeFloat64)
-	}
-	if shape[0] != shp[0] {
-		t.Errorf("TensorGetValues shape[0] was incorrect, got: %d, want: %d.", shape[0], shp[0])
-	}
-	var err error = nil
-	dataFloat64s, err := redis.Float64s(data, err)
-	if dataFloat64s[0] != values[0] {
-		t.Errorf("TensorGetValues dt was incorrect, got: %f, want: %f.", dataFloat64s[0], values[0])
-	}
-}
+//
+//func TestTensorGetValues(t *testing.T) {
+//	pclient := ConnectPipelined("redis://localhost:6379", 3, nil)
+//	values := []float64{1.1, 2.2, 3.3, 4.4}
+//	shp := []int{4}
+//	defer pclient.Close()
+//	errortset := pclient.TensorSet("test:TensorGetValues:tensor1", TypeFloat64, shp, values)
+//	if errortset != nil {
+//		t.Error(errortset)
+//	}
+//	if pclient.PipelinePos != 1 {
+//		t.Errorf("PipelinePos was incorrect, got: %d, want: %d.", pclient.PipelinePos, 1)
+//	}
+//	errortget := pclient.TensorGetValues("test:TensorGetValues:tensor1")
+//	if errortget != nil {
+//		t.Error(errortget)
+//	}
+//	if pclient.PipelinePos != 2 {
+//		t.Errorf("PipelinePos was incorrect, got: %d, want: %d.", pclient.PipelinePos, 2)
+//	}
+//	errorflush := pclient.ForceFlush()
+//	if errorflush != nil {
+//		t.Error(errortset)
+//	}
+//	if pclient.PipelinePos != 0 {
+//		t.Errorf("PipelinePos was incorrect, got: %d, want: %d.", pclient.PipelinePos, 0)
+//	}
+//	pclient.ActiveConn.Receive()
+//	rep2, _ := pclient.ActiveConn.Receive()
+//	dt, shape, data, errProc := ParseTensorResponseValues(rep2)
+//	if errProc != nil {
+//		t.Error(errProc)
+//	}
+//	if dt != TypeFloat64 {
+//		t.Errorf("TensorGetValues dt was incorrect, got: %s, want: %s.", dt, TypeFloat64)
+//	}
+//	if shape[0] != shp[0] {
+//		t.Errorf("TensorGetValues shape[0] was incorrect, got: %d, want: %d.", shape[0], shp[0])
+//	}
+//	var err error = nil
+//	dataFloat64s, err := redis.Float64s(data, err)
+//	if dataFloat64s[0] != values[0] {
+//		t.Errorf("TensorGetValues dt was incorrect, got: %f, want: %f.", dataFloat64s[0], values[0])
+//	}
+//}
 
 func TestConnectPipelined(t *testing.T) {
 	type args struct {

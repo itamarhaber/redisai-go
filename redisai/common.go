@@ -3,15 +3,17 @@ package redisai
 import (
 	"bytes"
 	"encoding/binary"
+	"errors"
 	"fmt"
 	"github.com/gomodule/redigo/redis"
 	"reflect"
+	"strconv"
 )
 
 type aiclient interface {
 	LoadBackend(backend_identifier BackendType, location string) (err error)
 	TensorSet(name string, dt DataType, shape []int, data interface{}) (err error)
-	TensorGet(name string, ct TensorContentType) (data interface{}, err error)
+	TensorGet(name string, ct TensorContentType) (data []interface{}, err error)
 	ModelSet(name string, backend BackendType, device DeviceType, data []byte, inputs []string, outputs []string) (err error)
 	ModelGet(name string) (data []byte, err error)
 	ModelDel(name string) (err error)
@@ -63,10 +65,6 @@ const (
 	TypeUint8 = DataType("UINT8")
 	// TypeUint16 represents a uint16 type
 	TypeUint16 = DataType("UINT16")
-	// TypeUint32 represents a uint32 type
-	TypeUint32 = DataType("UINT32")
-	// TypeUint64 represents a uint64 type
-	TypeUint64 = DataType("UINT64")
 	// TypeFloat32 is an alias for float
 	TypeFloat32 = DataType("FLOAT")
 	// TypeFloat64 is an alias for double
@@ -81,6 +79,8 @@ const (
 	// TensorContentTypeBLOB is an alias for BLOB tensor content
 	TensorContentTypeMeta = TensorContentType("META")
 )
+
+var ErrNil = errors.New("redisai-go: nil returned")
 
 func TensorSetArgs(name string, dt DataType, dims []int, data interface{}, includeCommandName bool) redis.Args {
 	args := redis.Args{}
@@ -139,137 +139,188 @@ func ModelRunArgs(name string, inputs []string, outputs []string, includeCommand
 	return args
 }
 
-func ParseTensorResponseMeta(respInitial interface{}) (dt DataType, shape []int, err error) {
-	rep, err := redis.Values(respInitial, err)
-	if len(rep) != 2 {
-		err = fmt.Errorf("redisai.TensorGet: AI.TENSORGET returned response with incorrect sizing. expected '%d' got '%d'", 2, len(rep))
-		return
-	}
-	sdt, err := redis.String(rep[0], nil)
+
+// DataType is a helper that converts a command reply to a DataType.
+func replyDataType(reply interface{}, err error) (dt DataType, outputErr error) {
 	if err != nil {
-		return
+		return "", err
 	}
-	shape, err = redis.Ints(rep[1], nil)
-	if err != nil {
-		return
+	switch reply := reply.(type) {
+	case string:
+		switch reply {
+		case "FLOAT":
+			dt = TypeFloat
+		case "DOUBLE":
+			dt = TypeDouble
+		case "INT8":
+			dt = TypeInt8
+		case "INT16":
+			dt = TypeInt16
+		case "INT32":
+			dt = TypeInt32
+		case "INT64":
+			dt = TypeInt64
+		case "UINT8":
+			dt = TypeUint8
+		case "UINT16":
+			dt = TypeUint16
+		}
+		return dt, nil
+	case nil:
+		return "", ErrNil
+
 	}
-	switch sdt {
-	case "FLOAT":
-		dt = TypeFloat
-	case "DOUBLE":
-		dt = TypeDouble
-	case "INT8":
-		dt = TypeInt8
-	case "INT16":
-		dt = TypeInt16
-	case "INT32":
-		dt = TypeInt32
-	case "INT64":
-		dt = TypeInt64
-	case "UINT8":
-		dt = TypeUint8
-	case "UINT16":
-		dt = TypeUint16
-	case "UINT32":
-		dt = TypeUint32
-	case "UINT64":
-		dt = TypeUint64
-	default:
-		err = fmt.Errorf("redisai.TensorGet: AI.TENSORGET returned unknown type '%s'", sdt)
-		return
-	}
-	return
+	return "", fmt.Errorf("redigo: unexpected type for replyDataType, got type %T", reply)
 }
 
-func ParseTensorResponseValues(respInitial interface{}) (dt DataType, shape []int, data interface{}, err error) {
-	rep, err := redis.Values(respInitial, err)
-	if len(rep) != 3 {
-		err = fmt.Errorf("redisai.TensorGet: AI.TENSORGET returned response with incorrect sizing. expected '%d' got '%d'", 3, len(rep))
-		return
+func processTensorReplyMeta(resp interface{}, err error ) (data []interface{}, outErr error) {
+	data, outErr = redis.Values(resp, err)
+	if len(data) < 2 {
+		err = fmt.Errorf("redisai.TensorGet: AI.TENSORGET returned response with incorrect sizing. expected at least '%d' got '%d'", 2, len(data))
+		return data, err
 	}
-	sdt, err := redis.String(rep[0], nil)
-	if err != nil {
-		return
-	}
-	shape, err = redis.Ints(rep[1], nil)
-	if err != nil {
-		return
-	}
-	data, err = redis.Values(rep[2], nil)
-	if err != nil {
-		return
-	}
-	switch sdt {
-	case "FLOAT":
-		dt = TypeFloat
-	case "DOUBLE":
-		dt = TypeDouble
-	case "INT8":
-		dt = TypeInt8
-	case "INT16":
-		dt = TypeInt16
-	case "INT32":
-		dt = TypeInt32
-	case "INT64":
-		dt = TypeInt64
-	case "UINT8":
-		dt = TypeUint8
-	case "UINT16":
-		dt = TypeUint16
-	case "UINT32":
-		dt = TypeUint32
-	case "UINT64":
-		dt = TypeUint64
-	default:
-		err = fmt.Errorf("redisai.TensorGet: AI.TENSORGET returned unknown type '%s'", sdt)
-		return
-	}
-	return
+	data[0], outErr = replyDataType(data[0], err)
+	data[1], outErr = redis.Ints(data[1], err)
+	return data, outErr
 }
 
-func ParseTensorResponseBlob(respInitial interface{}) (dt DataType, shape []int, data []byte, err error) {
-	rep, err := redis.Values(respInitial, err)
-	if len(rep) != 3 {
-		err = fmt.Errorf("redisai.TensorGet: AI.TENSORGET returned response with incorrect sizing. expected '%d' got '%d'", 3, len(rep))
-		return
+func processTensorReplyBlob(resp []interface{}, err error)  ( []interface{},  error) {
+	if len(resp) < 3 {
+		err = fmt.Errorf("redisai.TensorGet: AI.TENSORGET returned response with incorrect sizing. expected '%d' got '%d'", 3, len(resp))
+		return resp, err
 	}
-	sdt, err := redis.String(rep[0], nil)
+	resp[2], err = redis.Bytes(resp[2], err)
+	return resp, err
+}
+
+func processTensorReplyValues(resp []interface{}, err error) ( []interface{},  error) {
+	if len(resp) < 3 {
+		err = fmt.Errorf("redisai.TensorGet: AI.TENSORGET returned response with incorrect sizing. expected '%d' got '%d'", 3, len(resp))
+		return resp, err
+	}
+		switch resp[0].(DataType) {
+		case TypeFloat:
+			resp[2], err = Float32s(resp[2], err)
+		case TypeDouble:
+			resp[2], err = redis.Float64s(resp[2], err)
+		case TypeInt8:
+			resp[2], err = Int8s(resp[2], err)
+		case TypeInt16:
+			resp[2], err = Int16s(resp[2], err)
+		case TypeInt32:
+			resp[2], err = redis.Ints(resp[2], err)
+		case TypeInt64:
+			resp[2], err = redis.Int64s(resp[2], err)
+		case TypeUint8:
+			resp[2], err = Uint8s(resp[2], err)
+		case TypeUint16:
+			resp[2], err = Uint16s(resp[2], err)
+		}
+
+
+	//resp[2], err = redis.Values(resp[2], err)
+
+	return resp, err
+}
+
+// Float32s is a helper that converts an array command reply to a []float32.
+func Float32s(reply interface{}, err error) ([]float32, error) {
+	var result []float32
+	err = sliceHelper(reply, err, "Float32s", func(n int) { result = make([]float32, n) }, func(i int, v interface{}) error {
+		p, ok := v.([]byte)
+		if !ok {
+			return fmt.Errorf("redisai-go: unexpected element type for Float32s, got type %T", v)
+		}
+		var f, err = strconv.ParseFloat(string(p), 64)
+		result[i] = float32(f)
+		return err
+	})
+	return result, err
+}
+
+
+// Uint16s is a helper that converts an array command reply to a []int8.
+func Uint16s(reply interface{}, err error) ([]uint16, error) {
+	var result []uint16
+	err = sliceHelper(reply, err, "Uint16s", func(n int) { result = make([]uint16, n) }, func(i int, v interface{}) error {
+		p, ok := v.([]byte)
+		if !ok {
+			return fmt.Errorf("redisai-go: unexpected element type for Uint16s, got type %T", v)
+		}
+		result[i] = binary.LittleEndian.Uint16(p)
+		return err
+	})
+	return result, err
+}
+
+
+// Uint16s is a helper that converts an array command reply to a []int8.
+func Int16s(reply interface{}, err error) ([]int16, error) {
+	var result []int16
+	tr , err := redis.Values( reply, err )
 	if err != nil {
-		return
+		return result, err
 	}
-	shape, err = redis.Ints(rep[1], nil)
+	for _, num := range tr {
+		result = append( result, int16(num.(int64)) )
+	}
+	return result, err
+}
+
+
+// Uint8s is a helper that converts an array command reply to a []int8.
+func Uint8s(reply interface{}, err error) ([]byte, error) {
+	var result []byte
+	err = sliceHelper(reply, err, "Uint8s", func(n int) { result = make([]byte, n) }, func(i int, v interface{}) error {
+		p, ok := v.([]byte)
+		if !ok {
+			return fmt.Errorf("redisai-go: unexpected element type for Uint8s, got type %T", v)
+		}
+		result[i] = p[i]
+		return err
+	})
+	return result, err
+}
+
+// Int8s is a helper that converts an array command reply to a []int8.
+func Int8s(reply interface{}, err error) ([]int8, error) {
+	var result []int8
+	tr , err := redis.Values( reply, err )
 	if err != nil {
-		return
+		return result, err
 	}
-	data, err = redis.Bytes(rep[2], nil)
+	for _, num := range tr {
+		result = append( result, int8(num.(int64)) )
+	}
+	return result, err
+}
+
+func sliceHelper(reply interface{}, err error, name string, makeSlice func(int), assign func(int, interface{}) error) error {
 	if err != nil {
-		return
+		return err
 	}
-	switch sdt {
-	case "FLOAT":
-		dt = TypeFloat
-	case "DOUBLE":
-		dt = TypeDouble
-	case "INT8":
-		dt = TypeInt8
-	case "INT16":
-		dt = TypeInt16
-	case "INT32":
-		dt = TypeInt32
-	case "INT64":
-		dt = TypeInt64
-	case "UINT8":
-		dt = TypeUint8
-	case "UINT16":
-		dt = TypeUint16
-	case "UINT32":
-		dt = TypeUint32
-	case "UINT64":
-		dt = TypeUint64
-	default:
-		err = fmt.Errorf("redisai.TensorGet: AI.TENSORGET returned unknown type '%s'", sdt)
-		return
+	switch reply := reply.(type) {
+	case []interface{}:
+		makeSlice(len(reply))
+		for i := range reply {
+			if reply[i] == nil {
+				continue
+			}
+			if err := assign(i, reply[i]); err != nil {
+				return err
+			}
+		}
+		return nil
+	case nil:
+		return ErrNil
 	}
+	return fmt.Errorf("redigo: unexpected type for %s, got type %T", name, reply)
+}
+
+func float64ToByte(f float64) ( converted []byte ,err error )  {
+	var buf bytes.Buffer
+	err = binary.Write(&buf, binary.BigEndian, f)
+	converted = buf.Bytes()
 	return
 }
 

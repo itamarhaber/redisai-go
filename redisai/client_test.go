@@ -6,6 +6,13 @@ import (
 	"testing"
 )
 
+
+// Global vars:
+var (
+	pclient = Connect("redis://localhost:6379",  nil )
+)
+
+
 func TestClient_LoadBackend(t *testing.T) {
 	type fields struct {
 		pool *redis.Pool
@@ -336,6 +343,39 @@ func TestClient_ScriptSetFromFile(t *testing.T) {
 }
 
 func TestClient_TensorGet(t *testing.T) {
+
+	valuesFloat32 := []float32{1.1}
+	valuesFloat64 := []float64{1.1}
+
+	valuesInt8 := []int8{1}
+	valuesInt16 := []int16{1}
+	valuesInt32 := []int{1}
+	valuesInt64 := []int64{1}
+
+	valuesUint8 := []uint8{1}
+	valuesUint16 := []uint16{1}
+	keyFloat32 := "test:TensorGet:TypeFloat32:1"
+	keyFloat64 := "test:TensorGet:TypeFloat64:1"
+
+	keyInt8 := "test:TensorGet:TypeInt8:1"
+	keyInt16 := "test:TensorGet:TypeInt16:1"
+	keyInt32 := "test:TensorGet:TypeInt32:1"
+	keyInt64 := "test:TensorGet:TypeInt64:1"
+
+	keyUint8 := "test:TensorGet:TypeUint8:1"
+	keyUint16 := "test:TensorGet:TypeUint16:1"
+	shp := []int{1}
+	pclient.TensorSet(keyFloat32, TypeFloat32, shp, valuesFloat32)
+	pclient.TensorSet(keyFloat64, TypeFloat64, shp, valuesFloat64)
+
+	pclient.TensorSet(keyInt8, TypeInt8, shp, valuesInt8)
+	pclient.TensorSet(keyInt16, TypeInt16, shp, valuesInt16)
+	pclient.TensorSet(keyInt32, TypeInt32, shp, valuesInt32)
+	pclient.TensorSet(keyInt64, TypeInt64, shp, valuesInt64)
+
+	pclient.TensorSet(keyUint8, TypeUint8, shp, valuesUint8)
+	pclient.TensorSet(keyUint16, TypeUint16, shp, valuesUint16)
+
 	type fields struct {
 		pool *redis.Pool
 	}
@@ -347,23 +387,44 @@ func TestClient_TensorGet(t *testing.T) {
 		name     string
 		fields   fields
 		args     args
+		wantDt DataType
+		wantShape []int
 		wantData interface{}
+		compareDt bool
+		compareShape bool
+		compareData bool
 		wantErr  bool
 	}{
-		// TODO: Add test cases.
+		{ keyFloat32, fields{ pclient.pool } , args{ keyFloat32, TensorContentTypeValues }, TypeFloat32,shp,valuesFloat32, true, true, true, false},
+		{ keyFloat64, fields{ pclient.pool } , args{ keyFloat64, TensorContentTypeValues }, TypeFloat64,shp,valuesFloat64, true, true, true, false},
+
+		{ keyInt8, fields{ pclient.pool } , args{ keyInt8, TensorContentTypeValues }, TypeInt8,shp,valuesInt8, true, true, true, false},
+		{ keyInt16, fields{ pclient.pool } , args{ keyInt16, TensorContentTypeValues }, TypeInt16,shp,valuesInt16, true, true, true, false},
+		{ keyInt32, fields{ pclient.pool } , args{ keyInt32, TensorContentTypeValues }, TypeInt32,shp,valuesInt32, true, true, true, false},
+		{ keyInt64, fields{ pclient.pool } , args{ keyInt64, TensorContentTypeValues }, TypeInt64,shp,valuesInt64, true, true, true, false},
+		//commetting while issue is sorted out
+		//{ keyUint8, fields{ pclient.pool } , args{ keyUint8, TensorContentTypeValues }, TypeUint8,shp,valuesUint8, true, true, true, false},
+		//{ keyUint16, fields{ pclient.pool } , args{ keyUint16, TensorContentTypeValues }, TypeUint16,shp,valuesUint16, true, true, true, false},
+
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
 				pool: tt.fields.pool,
 			}
-			gotData, err := c.TensorGet(tt.args.name, tt.args.ct)
+			gotResp, err := c.TensorGet(tt.args.name, tt.args.ct)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TensorGet() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(gotData, tt.wantData) {
-				t.Errorf("TensorGet() gotData = %v, want %v", gotData, tt.wantData)
+			if tt.compareDt && !reflect.DeepEqual(gotResp[0], tt.wantDt) {
+				t.Errorf("TensorGet() gotDt = %v, want %v", gotResp[0], tt.wantDt)
+			}
+			if tt.compareShape && !reflect.DeepEqual(gotResp[1], tt.wantShape) {
+				t.Errorf("TensorGet() gotShape = %v, want %v", gotResp[1], tt.wantShape)
+			}
+			if tt.compareData && !reflect.DeepEqual(gotResp[2], tt.wantData) {
+				t.Errorf("TensorGet() gotData = %v, want %v", gotResp[2], tt.wantData)
 			}
 		})
 	}
@@ -489,7 +550,6 @@ func TestClient_TensorGetValues(t *testing.T) {
 }
 
 func TestClient_TensorSet(t *testing.T) {
-	pclient := Connect("redis://localhost:6379",  nil )
 	type fields struct {
 		pool *redis.Pool
 	}
@@ -506,8 +566,8 @@ func TestClient_TensorSet(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{ "test:TestPipelineIncr:1", fields{ pclient.pool } , args{ "test:TestPipelineIncr:1", TypeFloat, []int{1}, []float32{1} }, false },
-		{ "test:TestPipelineIncr:1:FaultyDims", fields{ pclient.pool } , args{ "test:TestPipelineIncr:1", TypeFloat, []int{1,10}, []float32{1} }, true },
+		{ "test:TestClient_TensorSet:1", fields{ pclient.pool } , args{ "test:TestClient_TensorSet:1", TypeFloat, []int{1}, []float32{1} }, false },
+		{ "test:TestClient_TensorSet:1:FaultyDims", fields{ pclient.pool } , args{ "test:TestClient_TensorSet:1:FaultyDims", TypeFloat, []int{1,10}, []float32{1} }, true },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {

@@ -14,16 +14,24 @@ type Client struct {
 	pool *redis.Pool
 }
 
-func (c *Client) TensorGet(name string, ct TensorContentType) (data interface{}, err error) {
+func (c *Client) TensorGet(name string, ct TensorContentType) (data []interface{}, err error) {
 	args := redis.Args{}.Add(name, ct)
 	conn := c.pool.Get()
 	defer conn.Close()
-	data, err = conn.Do("AI.TENSORGET", args...)
+	resp, err := conn.Do("AI.TENSORGET", args...)
+	data, err = processTensorReplyMeta(resp,err)
+	if ct == TensorContentTypeBlob {
+		data, err = processTensorReplyBlob(data,err)
+	}
+	if ct == TensorContentTypeValues {
+		data, err = processTensorReplyValues(data,err)
+	}
 	return
 }
 
+
 // TensorGetValues gets a tensor's values
-func (c *Client) TensorGetValues(name string) (dt DataType, shape []int, data interface{}, err error) {
+func (c *Client) TensorGetValues(name string) (dt DataType, shape []int, data []interface{}, err error) {
 	args := redis.Args{}.Add(name, TensorContentTypeValues)
 	conn := c.pool.Get()
 	defer conn.Close()
@@ -32,7 +40,15 @@ func (c *Client) TensorGetValues(name string) (dt DataType, shape []int, data in
 	if err != nil {
 		return
 	}
-	return ParseTensorResponseValues(rep)
+	resp,err := processTensorReplyMeta(rep,err)
+	if err != nil {
+		return
+	}
+	resp,err = processTensorReplyValues(resp,err)
+	if err != nil {
+		return
+	}
+	return resp[0].(DataType), resp[1].([]int), resp[2].([]interface{}), err
 }
 
 // TensorGetValues gets a tensor's values
@@ -40,12 +56,15 @@ func (c *Client) TensorGetMeta(name string) (dt DataType, shape []int, err error
 	args := redis.Args{}.Add(name, TensorContentTypeMeta)
 	conn := c.pool.Get()
 	defer conn.Close()
-
 	rep, err := conn.Do("AI.TENSORGET", args...)
 	if err != nil {
 		return
 	}
-	return ParseTensorResponseMeta(rep)
+	resp,err := processTensorReplyMeta(rep,err)
+	if err != nil {
+		return
+	}
+	return resp[0].(DataType), resp[1].([]int), err
 }
 
 // TensorGetValues gets a tensor's values
@@ -58,7 +77,17 @@ func (c *Client) TensorGetBlob(name string) (dt DataType, shape []int, data []by
 	if err != nil {
 		return
 	}
-	return ParseTensorResponseBlob(rep)
+
+	resp,err := processTensorReplyMeta(rep,err)
+	if err != nil {
+		return
+	}
+	resp,err = processTensorReplyBlob(resp,err)
+	if err != nil {
+		return
+	}
+
+	return resp[0].(DataType), resp[1].([]int), resp[2].([]byte), err
 }
 
 func (c *Client) ModelGet(name string) (data []byte, err error) {
