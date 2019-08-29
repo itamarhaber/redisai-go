@@ -593,6 +593,35 @@ func TestClient_TensorGetValues(t *testing.T) {
 }
 
 func TestClient_TensorSet(t *testing.T) {
+
+	valuesFloat32 := []float32{1.1}
+	valuesFloat64 := []float64{1.1}
+
+	valuesInt8 := []int8{1}
+	valuesInt16 := []int16{1}
+	valuesInt32 := []int{1}
+	valuesInt64 := []int64{1}
+
+	valuesUint8 := []uint8{1}
+	valuesByte := []byte{1}
+
+	valuesUint16 := []uint16{1}
+	keyFloat32 := "test:TensorSet:TypeFloat32:1"
+	keyFloat64 := "test:TensorSet:TypeFloat64:1"
+
+	keyInt8 := "test:TensorSet:TypeInt8:1"
+	keyInt16 := "test:TensorSet:TypeInt16:1"
+	keyInt32 := "test:TensorSet:TypeInt32:1"
+	keyInt64 := "test:TensorSet:TypeInt64:1"
+
+	keyByte := "test:TensorSet:Type[]byte:1"
+	keyUint8 := "test:TensorSet:TypeUint8:1"
+	keyUint16 := "test:TensorSet:TypeUint16:1"
+
+	keyInt8Meta := "test:TensorSet:TypeInt8:Meta:1"
+
+	shp := []int{1}
+
 	type fields struct {
 		pool *redis.Pool
 	}
@@ -609,7 +638,20 @@ func TestClient_TensorSet(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{ "test:TestClient_TensorSet:1", fields{ pclient.pool } , args{ "test:TestClient_TensorSet:1", TypeFloat, []int{1}, []float32{1} }, false },
+		{ keyFloat32, fields{ pclient.pool } , args{ keyFloat32, TypeFloat, shp, valuesFloat32 }, false },
+		{ keyFloat64, fields{ pclient.pool } , args{ keyFloat64, TypeFloat64, shp, valuesFloat64 }, false },
+
+		{ keyInt8, fields{ pclient.pool } , args{ keyInt8, TypeInt8, shp, valuesInt8 }, false },
+		{ keyInt16, fields{ pclient.pool } , args{ keyInt16, TypeInt16, shp, valuesInt16 }, false },
+		{ keyInt32, fields{ pclient.pool } , args{ keyInt32, TypeInt32, shp, valuesInt32 }, false },
+		{ keyInt64, fields{ pclient.pool } , args{ keyInt64, TypeInt64, shp, valuesInt64 }, false },
+
+		{ keyUint8, fields{ pclient.pool } , args{ keyUint8, TypeUint8, shp, valuesUint8 }, false },
+		{ keyUint16, fields{ pclient.pool } , args{ keyUint16, TypeUint16, shp, valuesUint16 }, false },
+
+		{ keyInt8Meta, fields{ pclient.pool } , args{ keyInt8Meta, TypeUint8, shp, nil }, false },
+		{ keyByte, fields{ pclient.pool } , args{ keyByte, TypeUint8, shp, valuesByte }, false },
+
 		{ "test:TestClient_TensorSet:1:FaultyDims", fields{ pclient.pool } , args{ "test:TestClient_TensorSet:1:FaultyDims", TypeFloat, []int{1,10}, []float32{1} }, true },
 	}
 	for _, tt := range tests {
