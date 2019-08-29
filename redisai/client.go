@@ -90,7 +90,7 @@ func (c *Client) TensorGetBlob(name string) (dt DataType, shape []int, data []by
 	return resp[0].(DataType), resp[1].([]int), resp[2].([]byte), err
 }
 
-func (c *Client) ModelGet(name string) (data []byte, err error) {
+func (c *Client) ModelGet(name string) (data []interface{}, err error) {
 	args := redis.Args{}.Add(name)
 	conn := c.pool.Get()
 	defer conn.Close()
@@ -98,12 +98,12 @@ func (c *Client) ModelGet(name string) (data []byte, err error) {
 	if err != nil {
 		return
 	}
-	rep, err := redis.Values(respInitial, err)
-	if len(rep) != 3 {
-		err = fmt.Errorf("redisai.ModelGet: AI.MODELGET returned response with incorrect sizing. expected '%d' got '%d'", 3, len(rep))
+	data, err = redis.Values(respInitial, err)
+	if len(data) != 3 {
+		err = fmt.Errorf("redisai.ModelGet: AI.MODELGET returned response with incorrect sizing. expected '%d' got '%d'", 3, len(data))
 		return
 	}
-	data, err = redis.Bytes(rep[2], nil)
+	data[2], err = redis.Bytes(data[2], nil)
 	if err != nil {
 		return
 	}
@@ -118,7 +118,7 @@ func (c *Client) ModelDel(name string) (err error) {
 	return
 }
 
-func (c *Client) ScriptGet(name string) (data []byte, err error) {
+func (c *Client) ScriptGet(name string) (data []interface{}, err error) {
 	args := redis.Args{}.Add(name)
 	conn := c.pool.Get()
 	defer conn.Close()
@@ -126,12 +126,19 @@ func (c *Client) ScriptGet(name string) (data []byte, err error) {
 	if err != nil {
 		return
 	}
-	rep, err := redis.Values(respInitial, err)
-	if len(rep) != 3 {
-		err = fmt.Errorf("redisai.ScriptGet: AI.SCRIPTGET returned response with incorrect sizing. expected '%d' got '%d'", 3, len(rep))
+	if respInitial == nil {
+		return data, err
+	}
+	data, err = redis.Values(respInitial, err)
+	if len(data) != 2 {
+		err = fmt.Errorf("redisai.ScriptGet: AI.SCRIPTGET returned response with incorrect sizing. expected '%d' got '%d'", 2, len(data))
 		return
 	}
-	data, err = redis.Bytes(rep[2], nil)
+	data[0], err = redis.Int(data[0], nil)
+	if err != nil {
+		return
+	}
+	data[1], err = redis.String(data[1], nil)
 	if err != nil {
 		return
 	}
@@ -234,8 +241,8 @@ func (c *Client) ModelRun(name string, inputs []string, outputs []string) error 
 }
 
 // ScriptSet sets a RedisAI script from a blob
-func (c *Client) ScriptSet(name string, device DeviceType, data []byte) error {
-	args := redis.Args{}.Add(name, device, data)
+func (c *Client) ScriptSet(name string, device DeviceType, script_source string) error {
+	args := redis.Args{}.Add(name, device, script_source)
 
 	conn := c.pool.Get()
 	defer conn.Close()
@@ -255,7 +262,7 @@ func (c *Client) ScriptSetFromFile(name string, device DeviceType, path string) 
 	if err != nil {
 		return err
 	}
-	return c.ScriptSet(name, device, data)
+	return c.ScriptSet(name, device, string(data))
 }
 
 // ScriptRun runs a RedisAI script

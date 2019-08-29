@@ -15,11 +15,11 @@ type aiclient interface {
 	TensorSet(name string, dt DataType, shape []int, data interface{}) (err error)
 	TensorGet(name string, ct TensorContentType) (data []interface{}, err error)
 	ModelSet(name string, backend BackendType, device DeviceType, data []byte, inputs []string, outputs []string) (err error)
-	ModelGet(name string) (data []byte, err error)
+	ModelGet(name string) (data []interface{}, err error)
 	ModelDel(name string) (err error)
 	ModelRun(name string, inputs []string, outputs []string) (err error)
-	ScriptSet(name string, device DeviceType, data []byte) (err error)
-	ScriptGet(name string) (data []byte, err error)
+	ScriptSet(name string, device DeviceType, data string) (err error)
+	ScriptGet(name string) (data []interface{}, err error)
 	ScriptDel(name string) (err error)
 	ScriptRun(name string, fn string, inputs []string, outputs []string) (err error)
 }
@@ -88,38 +88,41 @@ func TensorSetArgs(name string, dt DataType, dims []int, data interface{}, inclu
 		args = args.Add("AI.TENSORSET")
 	}
 	args = args.Add(name, dt).AddFlat(dims)
-	var dtype = reflect.TypeOf(data)
-	switch dtype {
-	case reflect.TypeOf(([]uint8)(nil)):
-		fallthrough
-	case reflect.TypeOf(([]byte)(nil)):
-		args = args.Add("BLOB", data)
-	case reflect.TypeOf(""):
-		fallthrough
-	case reflect.TypeOf(([]int)(nil)):
-		fallthrough
-	case reflect.TypeOf(([]int8)(nil)):
-		fallthrough
-	case reflect.TypeOf(([]int16)(nil)):
-		fallthrough
-	case reflect.TypeOf(([]int32)(nil)):
-		fallthrough
-	case reflect.TypeOf(([]int64)(nil)):
-		fallthrough
-	case reflect.TypeOf(([]uint)(nil)):
-		fallthrough
-	case reflect.TypeOf(([]uint16)(nil)):
-		fallthrough
-	case reflect.TypeOf(([]uint32)(nil)):
-		fallthrough
-	case reflect.TypeOf(([]uint64)(nil)):
-		fallthrough
-	case reflect.TypeOf(([]float32)(nil)):
-		fallthrough
-	case reflect.TypeOf(([]float64)(nil)):
-		args = args.Add("VALUES").AddFlat(data)
-	default:
-		args = nil
+	if data != nil {
+		var dtype = reflect.TypeOf(data)
+		switch dtype {
+		case reflect.TypeOf(([]uint8)(nil)):
+			fallthrough
+		case reflect.TypeOf(([]byte)(nil)):
+			args = args.Add("BLOB", data)
+		case reflect.TypeOf(""):
+			fallthrough
+		case reflect.TypeOf(([]int)(nil)):
+			fallthrough
+		case reflect.TypeOf(([]int8)(nil)):
+			fallthrough
+		case reflect.TypeOf(([]int16)(nil)):
+			fallthrough
+		case reflect.TypeOf(([]int32)(nil)):
+			fallthrough
+		case reflect.TypeOf(([]int64)(nil)):
+			fallthrough
+		case reflect.TypeOf(([]uint)(nil)):
+			fallthrough
+		case reflect.TypeOf(([]uint16)(nil)):
+			fallthrough
+		case reflect.TypeOf(([]uint32)(nil)):
+			fallthrough
+		case reflect.TypeOf(([]uint64)(nil)):
+			fallthrough
+		case reflect.TypeOf(([]float32)(nil)):
+			fallthrough
+		case reflect.TypeOf(([]float64)(nil)):
+			args = args.Add("VALUES").AddFlat(data)
+		default:
+			//
+	}
+
 	}
 	return args
 }

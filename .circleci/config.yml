@@ -6,7 +6,7 @@ jobs:
   build: # test with redisearch:latest
     docker:
       - image: circleci/golang:1.9
-      - image: redisai/redisai:latest
+      - image: redisai/redisai:edge
 
     working_directory: /go/src/github.com/filipecosta90/redisai-go
     steps:
