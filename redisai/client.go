@@ -86,7 +86,6 @@ func (c *Client) TensorGetBlob(name string) (dt DataType, shape []int, data []by
 	if err != nil {
 		return
 	}
-
 	return resp[0].(DataType), resp[1].([]int), resp[2].([]byte), err
 }
 
@@ -103,6 +102,8 @@ func (c *Client) ModelGet(name string) (data []interface{}, err error) {
 		err = fmt.Errorf("redisai.ModelGet: AI.MODELGET returned response with incorrect sizing. expected '%d' got '%d'", 3, len(data))
 		return
 	}
+	data[0] = BackendType(data[0].(string))
+	data[1] = DeviceType(data[1].(string))
 	data[2], err = redis.Bytes(data[2], nil)
 	if err != nil {
 		return

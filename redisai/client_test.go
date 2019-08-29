@@ -80,6 +80,7 @@ func TestClient_ModelDel(t *testing.T) {
 
 func TestClient_ModelGet(t *testing.T) {
 	keyModel1 := "test:ModelGet:1"
+	keyModelUnexistent1 := "test:ModelGetUnexistent:1"
 	data, err := ioutil.ReadFile("./../tests/testdata/models/tensorflow/creditcardfraud.pb")
 	if err != nil {
 		t.Errorf("Error preparing for ModelGet(), while issuing ModelSet. error = %v", err)
@@ -104,9 +105,14 @@ func TestClient_ModelGet(t *testing.T) {
 		wantDevice  DeviceType
 		wantData    []byte
 		wantErr     bool
+		testBackend bool
+		testDevice bool
+		testData bool
 	}{
+		{ keyModelUnexistent1, fields{ pclient.pool } , args{ keyModelUnexistent1 }, BackendTF, DeviceCPU ,data ,true, false , false, false },
+		{ keyModel1, fields{ pclient.pool } , args{ keyModel1 }, BackendTF, DeviceCPU ,data ,false, true , true, false },
 		// TODO: check why is failing
-		//{ keyModel1, fields{ pclient.pool } , args{ keyModel1 }, BackendTF, DeviceCPU ,data ,false},
+		//{ keyModel1, fields{ pclient.pool } , args{ keyModel1 }, BackendTF, DeviceCPU ,data ,false,true,true,true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -118,9 +124,22 @@ func TestClient_ModelGet(t *testing.T) {
 				t.Errorf("ModelGet() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(gotData[2], tt.wantData) {
-				t.Errorf("ModelGet() gotData = %v, want %v. gotData Type %v, want Type %v.", gotData[2], tt.wantData, reflect.TypeOf(gotData[2]), reflect.TypeOf(tt.wantData))
+			if tt.testBackend {
+				if !reflect.DeepEqual(gotData[0], tt.wantBackend) {
+					t.Errorf("ModelGet() gotBackend = %v, want %v. gotBackend Type %v, want Type %v.", gotData[0], tt.wantBackend, reflect.TypeOf(gotData[0]), reflect.TypeOf(tt.wantBackend))
+				}
 			}
+			if tt.testDevice {
+				if !reflect.DeepEqual(gotData[1], tt.wantDevice) {
+					t.Errorf("ModelGet() gotDevice = %v, want %v. gotDevice Type %v, want Type %v.", gotData[1], tt.wantDevice, reflect.TypeOf(gotData[1]), reflect.TypeOf(tt.wantDevice))
+				}
+			}
+			if tt.testData {
+				if !reflect.DeepEqual(gotData[2], tt.wantData) {
+					t.Errorf("ModelGet() gotData = %v, want %v. gotData Type %v, want Type %v.", gotData[2], tt.wantData, reflect.TypeOf(gotData[2]), reflect.TypeOf(tt.wantData))
+				}
+			}
+
 		})
 	}
 }
