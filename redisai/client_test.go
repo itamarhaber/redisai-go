@@ -106,11 +106,11 @@ func TestClient_ModelGet(t *testing.T) {
 		wantData    []byte
 		wantErr     bool
 		testBackend bool
-		testDevice bool
-		testData bool
+		testDevice  bool
+		testData    bool
 	}{
-		{ keyModelUnexistent1, fields{ pclient.pool } , args{ keyModelUnexistent1 }, BackendTF, DeviceCPU ,data ,true, false , false, false },
-		{ keyModel1, fields{ pclient.pool } , args{ keyModel1 }, BackendTF, DeviceCPU ,data ,false, true , true, false },
+		{keyModelUnexistent1, fields{pclient.pool}, args{keyModelUnexistent1}, BackendTF, DeviceCPU, data, true, false, false, false},
+		{keyModel1, fields{pclient.pool}, args{keyModel1}, BackendTF, DeviceCPU, data, false, true, true, false},
 		// TODO: check why is failing
 		//{ keyModel1, fields{ pclient.pool } , args{ keyModel1 }, BackendTF, DeviceCPU ,data ,false,true,true,true},
 	}
