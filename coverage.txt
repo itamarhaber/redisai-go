@@ -178,11 +178,11 @@ github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:31.16,33.3 1 0
 github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:37.143,38.23 1 0
 github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:41.88,42.23 1 0
 github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:45.102,46.23 1 0
-github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:49.74,50.23 1 0
+github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:49.81,50.23 1 0
 github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:53.61,54.23 1 0
-github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:57.75,58.23 1 0
+github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:57.82,58.23 1 0
 github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:61.62,62.23 1 0
-github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:65.94,66.23 1 0
+github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:65.99,66.23 1 0
 github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:70.91,73.17 2 1
 github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:83.2,89.15 2 1
 github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:95.2,95.10 1 1
@@ -204,7 +204,7 @@ github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:131.2,131.8 1 2
 github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:117.25,120.3 2 1
 github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:122.16,124.3 1 0
 github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:128.16,130.3 1 0
-github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:135.105,137.16 2 4
+github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:135.106,137.16 2 4
 github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:140.2,140.25 1 4
 github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:143.2,144.16 2 4
 github.com/filipecosta90/redisai-go/redisai/pipelinedClient.go:149.2,150.16 2 4

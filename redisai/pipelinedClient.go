@@ -38,7 +38,7 @@ func (c *PipelinedClient) ModelSet(name string, backend BackendType, device Devi
 	panic("implement me")
 }
 
-func (c *PipelinedClient) ScriptSet(name string, device DeviceType, data []byte) error {
+func (c *PipelinedClient) ScriptSet(name string, device DeviceType, data string) error {
 	panic("implement me")
 }
 
@@ -46,7 +46,7 @@ func (c *PipelinedClient) ScriptRun(name string, fn string, inputs []string, out
 	panic("implement me")
 }
 
-func (c *PipelinedClient) ModelGet(name string) (data []byte, err error) {
+func (c *PipelinedClient) ModelGet(name string) (data []interface{}, err error) {
 	panic("implement me")
 }
 
@@ -54,7 +54,7 @@ func (c *PipelinedClient) ModelDel(name string) (err error) {
 	panic("implement me")
 }
 
-func (c *PipelinedClient) ScriptGet(name string) (data []byte, err error) {
+func (c *PipelinedClient) ScriptGet(name string) (data []interface{}, err error) {
 	panic("implement me")
 }
 
@@ -62,7 +62,7 @@ func (c *PipelinedClient) ScriptDel(name string) (err error) {
 	panic("implement me")
 }
 
-func (c *PipelinedClient) LoadBackend(backendIdentifier string, location string) (err error) {
+func (c *PipelinedClient) LoadBackend(backendIdentifier BackendType, location string) (err error) {
 	panic("implement me")
 }
 
@@ -132,8 +132,8 @@ func (c *PipelinedClient) ModelRun(name string, inputs []string, outputs []strin
 }
 
 // TensorSet sets a tensor
-func (c *PipelinedClient) TensorSet(name string, dt DataType, dims []int, data interface{}) (err error) {
-	args,err := TensorSetArgs(name, dt, dims, data, false)
+func (c *PipelinedClient) TensorSet(name string, dt DataType, shape []int, data interface{}) (err error) {
+	args,err := TensorSetArgs(name, dt, shape, data, false)
 	if err != nil {
 		return err
 	}

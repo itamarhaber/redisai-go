@@ -108,7 +108,7 @@ func TestPipelinedClient_LoadBackend(t *testing.T) {
 		ActiveConn      redis.Conn
 	}
 	type args struct {
-		backendIdentifier string
+		backendIdentifier BackendType
 		location          string
 	}
 	tests := []struct {
@@ -707,7 +707,7 @@ func TestPipelinedClient_ScriptSet(t *testing.T) {
 	type args struct {
 		name   string
 		device DeviceType
-		data   []byte
+		data   string
 	}
 	tests := []struct {
 		name    string
@@ -825,7 +825,6 @@ func TestPipelinedClient_TensorGet(t *testing.T) {
 	}{
 		{ t1, fields{ pipelinedClient.Pool,pipelinedClient.PipelineMaxSize, pipelinedClient.PipelinePos, pipelinedClient.ActiveConn }, args{t1, TensorContentTypeMeta }, r1, false },
 		{ t2, fields{ pipelinedClient.Pool,pipelinedClient.PipelineMaxSize, pipelinedClient.PipelinePos, nil }, args{t2, TensorContentTypeMeta }, r1, false },
-
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
