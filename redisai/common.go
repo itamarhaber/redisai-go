@@ -82,8 +82,9 @@ const (
 
 var ErrNil = errors.New("redisai-go: nil returned")
 
-func TensorSetArgs(name string, dt DataType, dims []int, data interface{}, includeCommandName bool) redis.Args {
+func TensorSetArgs(name string, dt DataType, dims []int, data interface{}, includeCommandName bool) (redis.Args, error) {
 	args := redis.Args{}
+	var err error = nil
 	if includeCommandName {
 		args = args.Add("AI.TENSORSET")
 	}
@@ -111,20 +112,23 @@ func TensorSetArgs(name string, dt DataType, dims []int, data interface{}, inclu
 			fallthrough
 		case reflect.TypeOf(([]uint16)(nil)):
 			fallthrough
-		case reflect.TypeOf(([]uint32)(nil)):
-			fallthrough
-		case reflect.TypeOf(([]uint64)(nil)):
-			fallthrough
 		case reflect.TypeOf(([]float32)(nil)):
 			fallthrough
 		case reflect.TypeOf(([]float64)(nil)):
 			args = args.Add("VALUES").AddFlat(data)
+			// unsupported data type
+		case reflect.TypeOf(([]uint32)(nil)):
+			fallthrough
+			// unsupported data type
+		case reflect.TypeOf(([]uint64)(nil)):
+			fallthrough
+			// unsupported data type
 		default:
-			//
+			err = fmt.Errorf("redisai.TensorSetArgs: AI.TENSOR does not support the following type %v", reflect.TypeOf(data) )
 	}
 
 	}
-	return args
+	return args,err
 }
 
 func ModelRunArgs(name string, inputs []string, outputs []string, includeCommandName bool) redis.Args {

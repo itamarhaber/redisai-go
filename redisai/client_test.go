@@ -1069,6 +1069,9 @@ func TestClient_TensorSet(t *testing.T) {
 	valuesByte := []byte{1}
 
 	valuesUint16 := []uint16{1}
+	valuesUint32 := []uint32{1}
+	valuesUint64 := []uint64{1}
+
 	keyFloat32 := "test:TensorSet:TypeFloat32:1"
 	keyFloat64 := "test:TensorSet:TypeFloat64:1"
 
@@ -1080,6 +1083,8 @@ func TestClient_TensorSet(t *testing.T) {
 	keyByte := "test:TensorSet:Type[]byte:1"
 	keyUint8 := "test:TensorSet:TypeUint8:1"
 	keyUint16 := "test:TensorSet:TypeUint16:1"
+	keyUint32 := "test:TensorSet:TypeUint32:ExpectError:1"
+	keyUint64 := "test:TensorSet:TypeUint64:ExpectError:1"
 
 	keyInt8Meta := "test:TensorSet:TypeInt8:Meta:1"
 
@@ -1111,6 +1116,8 @@ func TestClient_TensorSet(t *testing.T) {
 
 		{keyUint8, fields{pclient.pool}, args{keyUint8, TypeUint8, shp, valuesUint8}, false},
 		{keyUint16, fields{pclient.pool}, args{keyUint16, TypeUint16, shp, valuesUint16}, false},
+		{keyUint32, fields{pclient.pool}, args{keyUint32, TypeUint8, shp, valuesUint32}, true},
+		{keyUint64, fields{pclient.pool}, args{keyUint64, TypeUint8, shp, valuesUint64}, true},
 
 		{keyInt8Meta, fields{pclient.pool}, args{keyInt8Meta, TypeUint8, shp, nil}, false},
 		{keyByte, fields{pclient.pool}, args{keyByte, TypeUint8, shp, valuesByte}, false},

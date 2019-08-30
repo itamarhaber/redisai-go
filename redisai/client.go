@@ -3,7 +3,6 @@ package redisai
 import (
 	"fmt"
 	"io/ioutil"
-	"reflect"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
@@ -238,9 +237,9 @@ func (c *Client) ScriptRun(name string, fn string, inputs []string, outputs []st
 
 // TensorSet sets a tensor
 func (c *Client) TensorSet(name string, dt DataType, dims []int, data interface{}) (err error) {
-	args := TensorSetArgs(name, dt, dims, data, false)
-	if args == nil {
-		return fmt.Errorf("redisai.TensorSet: unknown type %T", reflect.TypeOf(data))
+	args,err := TensorSetArgs(name, dt, dims, data, false)
+	if err != nil {
+		return err
 	}
 	conn := c.pool.Get()
 	defer conn.Close()

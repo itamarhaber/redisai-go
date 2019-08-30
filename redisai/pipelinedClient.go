@@ -1,8 +1,6 @@
 package redisai
 
 import (
-	"fmt"
-	"reflect"
 	"time"
 
 	"github.com/gomodule/redigo/redis"
@@ -135,9 +133,9 @@ func (c *PipelinedClient) ModelRun(name string, inputs []string, outputs []strin
 
 // TensorSet sets a tensor
 func (c *PipelinedClient) TensorSet(name string, dt DataType, dims []int, data interface{}) (err error) {
-	args := TensorSetArgs(name, dt, dims, data, false)
-	if args == nil {
-		return fmt.Errorf("redisai.TensorSet: unknown type %T", reflect.TypeOf(data))
+	args,err := TensorSetArgs(name, dt, dims, data, false)
+	if err != nil {
+		return err
 	}
 	if c.ActiveConn == nil {
 		c.ActiveConn = c.Pool.Get()
