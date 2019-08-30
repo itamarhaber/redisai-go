@@ -177,7 +177,7 @@ func replyDataType(reply interface{}, err error) (dt DataType, outputErr error) 
 		return "", ErrNil
 
 	}
-	return "", fmt.Errorf("redigo: unexpected type for replyDataType, got type %T", reply)
+	return "", fmt.Errorf("redisai-go: unexpected type for replyDataType, got type %T", reply)
 }
 
 func processTensorReplyMeta(resp interface{}, err error ) (data []interface{}, outErr error) {
