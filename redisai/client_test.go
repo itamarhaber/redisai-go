@@ -680,8 +680,8 @@ func TestClient_ScriptRun(t *testing.T) {
 }
 
 func TestClient_ScriptSet(t *testing.T) {
-	//keyScript := "test:ScriptSet:1"
-	//scriptBin := "def myfunc(a, b):\r\n\treturn a + b\r\n"
+	keyScriptError := "test:ScriptSet:Error:1"
+	scriptBin := "import abc"
 	type fields struct {
 		pool *redis.Pool
 	}
@@ -696,7 +696,7 @@ func TestClient_ScriptSet(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		//{ keyScript, fields{ pclient.pool } , args{ keyScript, DeviceCPU, scriptBin }, false},
+		{ keyScriptError, fields{ pclient.pool } , args{ keyScriptError, DeviceCPU, scriptBin }, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
