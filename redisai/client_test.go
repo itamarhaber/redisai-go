@@ -607,8 +607,7 @@ func TestClient_ScriptDel(t *testing.T) {
 func TestClient_ScriptGet(t *testing.T) {
 	keyScript := "test:ScriptGet:1"
 	keyScriptEmpty := "test:ScriptGetEmpty:1"
-
-	scriptBin := "def bar(a, b):\n    return a + b\n"
+	scriptBin := ""
 
 	err := pclient.ScriptSet(keyScript, DeviceCPU, scriptBin)
 	if err != nil {
@@ -625,12 +624,13 @@ func TestClient_ScriptGet(t *testing.T) {
 		name     string
 		fields   fields
 		args     args
-		wantData []interface{}
+		wantDeviceType DeviceType
+		wantData string
 		wantErr  bool
 	}{
 		//TODO: revise this
-		//{ keyScript, fields{ pclient.pool } , args{ keyScript }, scriptBin ,false},
-		{keyScriptEmpty, fields{pclient.pool}, args{keyScriptEmpty}, nil, true},
+		{ keyScript, fields{ pclient.pool } , args{ keyScript }, DeviceCPU , "",false},
+		{keyScriptEmpty, fields{pclient.pool}, args{keyScriptEmpty}, DeviceCPU, "",true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -642,9 +642,15 @@ func TestClient_ScriptGet(t *testing.T) {
 				t.Errorf("ScriptGet() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(gotData, tt.wantData) {
-				t.Errorf("ScriptGet() gotData = %v, want %v", gotData, tt.wantData)
+			if tt.wantErr == false {
+				if !reflect.DeepEqual(gotData[0], tt.wantDeviceType) {
+					t.Errorf("ScriptGet() gotData = %v, want %v", gotData[0], tt.wantDeviceType)
+				}
+				if !reflect.DeepEqual(gotData[1], tt.wantData) {
+					t.Errorf("ScriptGet() gotData = %v, want %v", gotData[1], tt.wantData)
+				}
 			}
+
 		})
 	}
 }

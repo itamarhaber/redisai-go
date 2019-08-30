@@ -94,18 +94,12 @@ func (c *Client) ScriptGet(name string) (data []interface{}, err error) {
 	if err != nil {
 		return
 	}
-	if respInitial == nil {
-		return data, err
-	}
 	data, err = redis.Values(respInitial, err)
 	if len(data) != 2 {
 		err = fmt.Errorf("redisai.ScriptGet: AI.SCRIPTGET returned response with incorrect sizing. expected '%d' got '%d'", 2, len(data))
 		return
 	}
-	data[0], err = redis.Int(data[0], nil)
-	if err != nil {
-		return
-	}
+	data[0] = DeviceType(data[0].(string))
 	data[1], err = redis.String(data[1], nil)
 	if err != nil {
 		return
