@@ -13,6 +13,7 @@ var (
 )
 
 func TestClient_LoadBackend(t *testing.T) {
+	keyTest1 := "test:LoadBackend:Unexistant:1"
 	type fields struct {
 		pool *redis.Pool
 	}
@@ -26,6 +27,8 @@ func TestClient_LoadBackend(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
+		{keyTest1, fields{pclient.pool}, args{BackendTF, "unexistant"}, true},
+
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {

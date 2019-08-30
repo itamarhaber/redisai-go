@@ -118,12 +118,9 @@ func (c *Client) ScriptDel(name string) (err error) {
 	args := redis.Args{}.Add(name)
 	conn := c.pool.Get()
 	defer conn.Close()
-	rep, err := redis.String(conn.Do("AI.SCRIPTDEL", args...))
+	_, err = redis.String(conn.Do("AI.SCRIPTDEL", args...))
 	if err != nil {
 		return err
-	}
-	if rep != "OK" {
-		return fmt.Errorf("redisai.ScriptDel: AI.SCRIPTDEL returned '%s'", rep)
 	}
 	return
 }
@@ -132,12 +129,9 @@ func (c *Client) LoadBackend(backend_identifier BackendType, location string) (e
 	args := redis.Args{}.Add("LOADBACKEND").Add(backend_identifier).Add(location)
 	conn := c.pool.Get()
 	defer conn.Close()
-	rep, err := redis.String(conn.Do("AI.CONFIG", args...))
+	_, err = redis.String(conn.Do("AI.CONFIG", args...))
 	if err != nil {
 		return err
-	}
-	if rep != "OK" {
-		return fmt.Errorf("redisai.LoadBackend: AI.CONFIG LOADBACKEND returned '%s'", rep)
 	}
 	return
 }
@@ -162,7 +156,7 @@ func Connect(url string, pool *redis.Pool) (c *Client) {
 }
 
 // ModelSet sets a RedisAI model from a blob
-func (c *Client) ModelSet(name string, backend BackendType, device DeviceType, data []byte, inputs []string, outputs []string) error {
+func (c *Client) ModelSet(name string, backend BackendType, device DeviceType, data []byte, inputs []string, outputs []string) ( err error ) {
 	args := redis.Args{}.Add(name, backend, device)
 	if len(inputs) > 0 {
 		args = args.Add("INPUTS").AddFlat(inputs)
@@ -174,18 +168,15 @@ func (c *Client) ModelSet(name string, backend BackendType, device DeviceType, d
 
 	conn := c.pool.Get()
 	defer conn.Close()
-	rep, err := redis.String(conn.Do("AI.MODELSET", args...))
+	_, err = redis.String(conn.Do("AI.MODELSET", args...))
 	if err != nil {
 		return err
-	}
-	if rep != "OK" {
-		return fmt.Errorf("redisai.ModelSet: AI.MODELSET returned '%s'", rep)
 	}
 	return nil
 }
 
 // ModelSetFromFile sets a RedisAI model from a file
-func (c *Client) ModelSetFromFile(name string, backend BackendType, device DeviceType, path string, inputs []string, outputs []string) error {
+func (c *Client) ModelSetFromFile(name string, backend BackendType, device DeviceType, path string, inputs []string, outputs []string) (err error) {
 	data, err := ioutil.ReadFile(path)
 	if err != nil {
 		return err
@@ -194,33 +185,25 @@ func (c *Client) ModelSetFromFile(name string, backend BackendType, device Devic
 }
 
 // ModelRun runs a RedisAI model
-func (c *Client) ModelRun(name string, inputs []string, outputs []string) error {
+func (c *Client) ModelRun(name string, inputs []string, outputs []string) ( err error ) {
 	args := ModelRunArgs(name, inputs, outputs, false)
 	conn := c.pool.Get()
 	defer conn.Close()
-
-	rep, err := redis.String(conn.Do("AI.MODELRUN", args...))
+	_, err = redis.String(conn.Do("AI.MODELRUN", args...))
 	if err != nil {
 		return err
-	}
-	if rep != "OK" {
-		return fmt.Errorf("redisai.ModelRun: AI.MODELRUN returned '%s'", rep)
 	}
 	return nil
 }
 
 // ScriptSet sets a RedisAI script from a blob
-func (c *Client) ScriptSet(name string, device DeviceType, script_source string) error {
+func (c *Client) ScriptSet(name string, device DeviceType, script_source string) ( err error ) {
 	args := redis.Args{}.Add(name, device, script_source)
-
 	conn := c.pool.Get()
 	defer conn.Close()
-	rep, err := redis.String(conn.Do("AI.SCRIPTSET", args...))
+	_, err = redis.String(conn.Do("AI.SCRIPTSET", args...))
 	if err != nil {
 		return err
-	}
-	if rep != "OK" {
-		return fmt.Errorf("redisai.ScriptSet: AI.SCRIPTSET returned '%s'", rep)
 	}
 	return nil
 }
@@ -235,7 +218,7 @@ func (c *Client) ScriptSetFromFile(name string, device DeviceType, path string) 
 }
 
 // ScriptRun runs a RedisAI script
-func (c *Client) ScriptRun(name string, fn string, inputs []string, outputs []string) error {
+func (c *Client) ScriptRun(name string, fn string, inputs []string, outputs []string) (err error) {
 	args := redis.Args{}.Add(name, fn)
 	if len(inputs) > 0 {
 		args = args.Add("INPUTS").AddFlat(inputs)
@@ -246,12 +229,9 @@ func (c *Client) ScriptRun(name string, fn string, inputs []string, outputs []st
 	conn := c.pool.Get()
 	defer conn.Close()
 
-	rep, err := redis.String(conn.Do("AI.SCRIPTRUN", args...))
+	_, err = redis.String(conn.Do("AI.SCRIPTRUN", args...))
 	if err != nil {
 		return err
-	}
-	if rep != "OK" {
-		return fmt.Errorf("redisai.ScriptRun: AI.SCRIPTRUN returned '%s'", rep)
 	}
 	return nil
 }
@@ -264,13 +244,9 @@ func (c *Client) TensorSet(name string, dt DataType, dims []int, data interface{
 	}
 	conn := c.pool.Get()
 	defer conn.Close()
-
-	rep, err := redis.String(conn.Do("AI.TENSORSET", args...))
+	_, err = redis.String(conn.Do("AI.TENSORSET", args...))
 	if err != nil {
 		return err
-	}
-	if rep != "OK" {
-		return fmt.Errorf("redisai.TensorSet: AI.TENSORSET returned '%s'", rep)
 	}
 	return nil
 }
