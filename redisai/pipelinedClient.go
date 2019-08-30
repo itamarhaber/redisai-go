@@ -13,7 +13,7 @@ type PipelinedClient struct {
 	ActiveConn      redis.Conn
 }
 
-func (c *PipelinedClient) TensorGet(name string, ct TensorContentType) (data interface{}, err error) {
+func (c *PipelinedClient) TensorGet(name string, ct TensorContentType) (data []interface{}, err error)  {
 	data = nil
 	args := redis.Args{}.Add(name, ct)
 
@@ -168,27 +168,6 @@ func (c *PipelinedClient) pipeIncr(conn redis.Conn) (err error) {
 		err = conn.Flush()
 		c.PipelinePos = 0
 	}
-	if err != nil {
-		return err
-	}
-	return nil
-}
-
-// TensorGetValues gets a tensor's values
-func (c *PipelinedClient) TensorGetValues(name string) (err error) {
-	args := redis.Args{}.Add(name, TensorContentTypeValues)
-
-	if c.ActiveConn == nil {
-		c.ActiveConn = c.Pool.Get()
-		defer c.ActiveConn.Close()
-	}
-	err = c.ActiveConn.Send("AI.TENSORGET", args...)
-	if err != nil {
-		return err
-	}
-	// incremement the pipeline
-	// flush if required
-	err = c.pipeIncr(c.ActiveConn)
 	if err != nil {
 		return err
 	}

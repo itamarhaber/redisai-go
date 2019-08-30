@@ -766,39 +766,6 @@ func TestPipelinedClient_TensorGet(t *testing.T) {
 	}
 }
 
-func TestPipelinedClient_TensorGetValues(t *testing.T) {
-	type fields struct {
-		Pool            *redis.Pool
-		PipelineMaxSize int
-		PipelinePos     int
-		ActiveConn      redis.Conn
-	}
-	type args struct {
-		name string
-	}
-	tests := []struct {
-		name    string
-		fields  fields
-		args    args
-		wantErr bool
-	}{
-		// TODO: Add test cases.
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			c := &PipelinedClient{
-				Pool:            tt.fields.Pool,
-				PipelineMaxSize: tt.fields.PipelineMaxSize,
-				PipelinePos:     tt.fields.PipelinePos,
-				ActiveConn:      tt.fields.ActiveConn,
-			}
-			if err := c.TensorGetValues(tt.args.name); (err != nil) != tt.wantErr {
-				t.Errorf("TensorGetValues() error = %v, wantErr %v", err, tt.wantErr)
-			}
-		})
-	}
-}
-
 func TestPipelinedClient_TensorSet(t *testing.T) {
 	type fields struct {
 		Pool            *redis.Pool
