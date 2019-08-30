@@ -490,6 +490,16 @@ func TestClient_ModelRun(t *testing.T) {
 }
 
 func TestClient_ModelSet(t *testing.T) {
+
+	keyModelSet1 := "test:ModelSet:1"
+	keyModelSetUnexistant := "test:ModelSet:Unexistant:1"
+	dataUnexistant := []byte{}
+	data, err := ioutil.ReadFile("./../tests/testdata/models/tensorflow/creditcardfraud.pb")
+	if err != nil {
+		t.Errorf("Error preparing for ModelSet(), while reading file. error = %v", err)
+		return
+	}
+
 	type fields struct {
 		pool *redis.Pool
 	}
@@ -507,8 +517,9 @@ func TestClient_ModelSet(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		// TODO: Add test cases.
-	}
+		{keyModelSet1, fields{pclient.pool}, args{keyModelSet1, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"} }, false},
+		{keyModelSetUnexistant, fields{pclient.pool}, args{keyModelSetUnexistant, BackendTF, DeviceCPU, dataUnexistant, []string{"transaction", "reference"}, []string{"output"} }, true},
+		}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
