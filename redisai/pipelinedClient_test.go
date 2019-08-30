@@ -168,6 +168,18 @@ func TestPipelinedClient_ModelDel(t *testing.T) {
 }
 
 func TestPipelinedClient_ModelGet(t *testing.T) {
+
+	client := Connect("redis://localhost:6379", nil)
+	var r1 []interface{} = nil
+
+	keyModel1 := "test:TestPipelinedClient_ModelGet:1"
+	data, err := ioutil.ReadFile("./../tests/testdata/models/tensorflow/creditcardfraud.pb")
+	if err != nil {
+		t.Errorf("Error preparing for TestPipelinedClient_ModelGet(), while issuing ModelSet. error = %v", err)
+		return
+	}
+	err = client.ModelSet(keyModel1, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"})
+
 	type fields struct {
 		Pool            *redis.Pool
 		PipelineMaxSize int
@@ -181,10 +193,12 @@ func TestPipelinedClient_ModelGet(t *testing.T) {
 		name     string
 		fields   fields
 		args     args
-		wantData []byte
+		wantData []interface{}
 		wantErr  bool
 	}{
-		// TODO: Add test cases.
+
+		{  keyModel1, fields{ pipelinedClient.Pool,1, pipelinedClient.PipelinePos, pipelinedClient.ActiveConn },args{ keyModel1 }, r1,false  },
+
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -194,6 +208,7 @@ func TestPipelinedClient_ModelGet(t *testing.T) {
 				PipelinePos:     tt.fields.PipelinePos,
 				ActiveConn:      tt.fields.ActiveConn,
 			}
+			c.ForceFlush()
 			gotData, err := c.ModelGet(tt.args.name)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ModelGet() error = %v, wantErr %v", err, tt.wantErr)
