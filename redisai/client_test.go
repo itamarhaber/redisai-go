@@ -948,16 +948,18 @@ func TestClient_TensorGetValues(t *testing.T) {
 
 	valuesUint8 := []uint8{1}
 	valuesUint16 := []uint16{1}
-	keyFloat32 := "test:TensorGet:TypeFloat32:1"
-	keyFloat64 := "test:TensorGet:TypeFloat64:1"
+	keyFloat32 := "test:TensorGetValues:TypeFloat32:1"
+	keyFloat64 := "test:TensorGetValues:TypeFloat64:1"
 
-	keyInt8 := "test:TensorGet:TypeInt8:1"
-	keyInt16 := "test:TensorGet:TypeInt16:1"
-	keyInt32 := "test:TensorGet:TypeInt32:1"
-	keyInt64 := "test:TensorGet:TypeInt64:1"
+	keyInt8 := "test:TensorGetValues:TypeInt8:1"
+	keyInt16 := "test:TensorGetValues:TypeInt16:1"
+	keyInt32 := "test:TensorGetValues:TypeInt32:1"
+	keyInt64 := "test:TensorGetValues:TypeInt64:1"
 
-	keyUint8 := "test:TensorGet:TypeUint8:1"
-	keyUint16 := "test:TensorGet:TypeUint16:1"
+	keyUint8 := "test:TensorGetValues:TypeUint8:1"
+	keyUint16 := "test:TensorGetValues:TypeUint16:1"
+	keyUnexistant := "test:TensorGetValues:Unexistant"
+
 	shp := []int{1}
 	pclient.TensorSet(keyFloat32, TypeFloat32, shp, valuesFloat32)
 	pclient.TensorSet(keyFloat64, TypeFloat64, shp, valuesFloat64)
@@ -992,6 +994,12 @@ func TestClient_TensorGetValues(t *testing.T) {
 		{keyInt16, fields{pclient.pool}, args{keyInt16}, TypeInt16, shp, valuesInt16, false},
 		{keyInt32, fields{pclient.pool}, args{keyInt32}, TypeInt32, shp, valuesInt32, false},
 		{keyInt64, fields{pclient.pool}, args{keyInt64}, TypeInt64, shp, valuesInt64, false},
+
+		{keyUint8, fields{pclient.pool}, args{keyUint8}, TypeUint8, shp, valuesUint8, false},
+		{keyUint16, fields{pclient.pool}, args{keyUint16}, TypeUint16, shp, valuesUint16, false},
+
+		{keyUnexistant, fields{pclient.pool}, args{keyUnexistant}, TypeUint16, shp, valuesUint8, true},
+
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1003,14 +1011,16 @@ func TestClient_TensorGetValues(t *testing.T) {
 				t.Errorf("TensorGetValues() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if gotDt != tt.wantDt {
-				t.Errorf("TensorGetValues() gotDt = %v, want %v", gotDt, tt.wantDt)
-			}
-			if !reflect.DeepEqual(gotShape, tt.wantShape) {
-				t.Errorf("TensorGetValues() gotShape = %v, want %v", gotShape, tt.wantShape)
-			}
-			if !reflect.DeepEqual(gotData, tt.wantData) {
-				t.Errorf("TensorGetValues() gotData = %v, want %v", gotData, tt.wantData)
+			if tt.wantErr == false {
+				if gotDt != tt.wantDt {
+					t.Errorf("TensorGetValues() gotDt = %v, want %v", gotDt, tt.wantDt)
+				}
+				if !reflect.DeepEqual(gotShape, tt.wantShape) {
+					t.Errorf("TensorGetValues() gotShape = %v, want %v", gotShape, tt.wantShape)
+				}
+				if !reflect.DeepEqual(gotData, tt.wantData) {
+					t.Errorf("TensorGetValues() gotData = %v, want %v", gotData, tt.wantData)
+				}
 			}
 		})
 	}
