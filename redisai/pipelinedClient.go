@@ -128,7 +128,7 @@ func (c *PipelinedClient) ModelRun(name string, inputs []string, outputs []strin
 	if err != nil {
 		return err
 	}
-	return nil
+	return
 }
 
 // TensorSet sets a tensor
@@ -150,7 +150,7 @@ func (c *PipelinedClient) TensorSet(name string, dt DataType, dims []int, data i
 	if err != nil {
 		return err
 	}
-	return nil
+	return
 }
 
 func (c *PipelinedClient) ForceFlush() (err error) {
@@ -159,7 +159,7 @@ func (c *PipelinedClient) ForceFlush() (err error) {
 		c.PipelinePos = 0
 		err = c.ActiveConn.Flush()
 	}
-	return err
+	return
 }
 
 func (c *PipelinedClient) pipeIncr(conn redis.Conn) (err error) {
@@ -171,5 +171,5 @@ func (c *PipelinedClient) pipeIncr(conn redis.Conn) (err error) {
 	if err != nil {
 		return err
 	}
-	return nil
+	return
 }
