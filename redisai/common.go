@@ -319,14 +319,7 @@ func sliceHelper(reply interface{}, err error, name string, makeSlice func(int),
 	case nil:
 		return ErrNil
 	}
-	return fmt.Errorf("redigo: unexpected type for %s, got type %T", name, reply)
-}
-
-func float64ToByte(f float64) ( converted []byte ,err error )  {
-	var buf bytes.Buffer
-	err = binary.Write(&buf, binary.BigEndian, f)
-	converted = buf.Bytes()
-	return
+	return fmt.Errorf("redisai-go: unexpected type for %s, got type %T", name, reply)
 }
 
 func float32ToByte(f float32) ( converted []byte ,err error )  {

@@ -90,6 +90,8 @@ func Test_replyDataType(t *testing.T) {
 	var r8 interface{} = string("INT64")
 	var r9 interface{} = string("UINT8")
 	var r10 interface{} = string("UINT16")
+	var r11 interface{} = nil
+
 
 	var err1 error = fmt.Errorf("")
 
@@ -113,6 +115,8 @@ func Test_replyDataType(t *testing.T) {
 		{   "test:replyDataType:INT64:8",  args{ r8, nil } , TypeInt64, false },
 		{   "test:replyDataType:UINT8:9",  args{ r9, nil } , TypeUint8, false },
 		{   "test:replyDataType:UINT16:10",  args{ r10, nil } , TypeUint16, false },
+		{   "test:replyDataType:11:nil",  args{ r11, nil } , "", true },
+
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -123,6 +127,302 @@ func Test_replyDataType(t *testing.T) {
 			}
 			if gotDt != tt.wantDt {
 				t.Errorf("replyDataType() gotDt = %v, want %v", gotDt, tt.wantDt)
+			}
+		})
+	}
+}
+
+func TestFloat32s(t *testing.T) {
+	type args struct {
+		reply interface{}
+		err   error
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []float32
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Float32s(tt.args.reply, tt.args.err)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Float32s() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Float32s() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt16s(t *testing.T) {
+	type args struct {
+		reply interface{}
+		err   error
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []int16
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Int16s(tt.args.reply, tt.args.err)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Int16s() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Int16s() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestInt8s(t *testing.T) {
+	type args struct {
+		reply interface{}
+		err   error
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []int8
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Int8s(tt.args.reply, tt.args.err)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Int8s() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Int8s() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestTensorSetArgs(t *testing.T) {
+	type args struct {
+		name               string
+		dt                 DataType
+		dims               []int
+		data               interface{}
+		includeCommandName bool
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    redis.Args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := TensorSetArgs(tt.args.name, tt.args.dt, tt.args.dims, tt.args.data, tt.args.includeCommandName)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("TensorSetArgs() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("TensorSetArgs() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUint16s(t *testing.T) {
+	type args struct {
+		reply interface{}
+		err   error
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []uint16
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Uint16s(tt.args.reply, tt.args.err)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Uint16s() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Uint16s() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func TestUint8s(t *testing.T) {
+	type args struct {
+		reply interface{}
+		err   error
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []uint8
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := Uint8s(tt.args.reply, tt.args.err)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Uint8s() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("Uint8s() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_float32ToByte(t *testing.T) {
+	type args struct {
+		f float32
+	}
+	tests := []struct {
+		name          string
+		args          args
+		wantConverted []byte
+		wantErr       bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotConverted, err := float32ToByte(tt.args.f)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("float32ToByte() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotConverted, tt.wantConverted) {
+				t.Errorf("float32ToByte() gotConverted = %v, want %v", gotConverted, tt.wantConverted)
+			}
+		})
+	}
+}
+
+func Test_processTensorReplyBlob(t *testing.T) {
+	type args struct {
+		resp []interface{}
+		err  error
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []interface{}
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := processTensorReplyBlob(tt.args.resp, tt.args.err)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("processTensorReplyBlob() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("processTensorReplyBlob() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_processTensorReplyMeta(t *testing.T) {
+	type args struct {
+		resp interface{}
+		err  error
+	}
+	tests := []struct {
+		name     string
+		args     args
+		wantData []interface{}
+		wantErr  bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			gotData, err := processTensorReplyMeta(tt.args.resp, tt.args.err)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("processTensorReplyMeta() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotData, tt.wantData) {
+				t.Errorf("processTensorReplyMeta() gotData = %v, want %v", gotData, tt.wantData)
+			}
+		})
+	}
+}
+
+func Test_processTensorReplyValues(t *testing.T) {
+	type args struct {
+		resp []interface{}
+		err  error
+	}
+	tests := []struct {
+		name    string
+		args    args
+		want    []interface{}
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			got, err := processTensorReplyValues(tt.args.resp, tt.args.err)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("processTensorReplyValues() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(got, tt.want) {
+				t.Errorf("processTensorReplyValues() got = %v, want %v", got, tt.want)
+			}
+		})
+	}
+}
+
+func Test_sliceHelper(t *testing.T) {
+	type args struct {
+		reply     interface{}
+		err       error
+		name      string
+		makeSlice func(int)
+		assign    func(int, interface{}) error
+	}
+	tests := []struct {
+		name    string
+		args    args
+		wantErr bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			if err := sliceHelper(tt.args.reply, tt.args.err, tt.args.name, tt.args.makeSlice, tt.args.assign); (err != nil) != tt.wantErr {
+				t.Errorf("sliceHelper() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
 	}
