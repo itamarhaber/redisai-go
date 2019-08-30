@@ -92,7 +92,6 @@ func Test_replyDataType(t *testing.T) {
 	var r10 interface{} = string("UINT16")
 	var r11 interface{} = nil
 
-
 	var err1 error = fmt.Errorf("")
 
 	type args struct {
@@ -133,6 +132,9 @@ func Test_replyDataType(t *testing.T) {
 }
 
 func TestFloat32s(t *testing.T) {
+
+	var r1 interface{} = nil
+
 	type args struct {
 		reply interface{}
 		err   error
@@ -143,7 +145,7 @@ func TestFloat32s(t *testing.T) {
 		want    []float32
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{ "test:Float32s:1", args{r1,nil},[]float32{},true },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -152,14 +154,20 @@ func TestFloat32s(t *testing.T) {
 				t.Errorf("Float32s() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Float32s() got = %v, want %v", got, tt.want)
+			if tt.wantErr == false {
+
+				if !reflect.DeepEqual(got, tt.want) {
+					t.Errorf("Float32s() got = %v, want %v", got, tt.want)
+				}
 			}
 		})
 	}
 }
 
 func TestInt16s(t *testing.T) {
+
+	var r1 interface{} = nil
+
 	type args struct {
 		reply interface{}
 		err   error
@@ -170,7 +178,7 @@ func TestInt16s(t *testing.T) {
 		want    []int16
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{ "test:Int16s:1", args{r1,nil},[]int16{},true },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -179,14 +187,20 @@ func TestInt16s(t *testing.T) {
 				t.Errorf("Int16s() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Int16s() got = %v, want %v", got, tt.want)
+			if tt.wantErr == false {
+
+				if !reflect.DeepEqual(got, tt.want) {
+					t.Errorf("Int16s() got = %v, want %v", got, tt.want)
+				}
 			}
 		})
 	}
 }
 
 func TestInt8s(t *testing.T) {
+
+	var r1 interface{} = nil
+
 	type args struct {
 		reply interface{}
 		err   error
@@ -197,7 +211,7 @@ func TestInt8s(t *testing.T) {
 		want    []int8
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{ "test:Int8s:1", args{r1,nil},[]int8{},true },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -206,8 +220,11 @@ func TestInt8s(t *testing.T) {
 				t.Errorf("Int8s() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Int8s() got = %v, want %v", got, tt.want)
+			if tt.wantErr == false {
+
+				if !reflect.DeepEqual(got, tt.want) {
+					t.Errorf("Int8s() got = %v, want %v", got, tt.want)
+				}
 			}
 		})
 	}
@@ -236,6 +253,7 @@ func TestTensorSetArgs(t *testing.T) {
 				t.Errorf("TensorSetArgs() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
+
 			if !reflect.DeepEqual(got, tt.want) {
 				t.Errorf("TensorSetArgs() got = %v, want %v", got, tt.want)
 			}
@@ -244,6 +262,9 @@ func TestTensorSetArgs(t *testing.T) {
 }
 
 func TestUint16s(t *testing.T) {
+
+	var r1 interface{} = nil
+
 	type args struct {
 		reply interface{}
 		err   error
@@ -254,7 +275,7 @@ func TestUint16s(t *testing.T) {
 		want    []uint16
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{ "test:Uint16s:1", args{r1,nil},[]uint16{},true },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -263,14 +284,20 @@ func TestUint16s(t *testing.T) {
 				t.Errorf("Uint16s() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Uint16s() got = %v, want %v", got, tt.want)
+			if tt.wantErr == false {
+				if !reflect.DeepEqual(got, tt.want) {
+					t.Errorf("Uint16s() got = %v, want %v", got, tt.want)
+				}
 			}
+
 		})
 	}
 }
 
 func TestUint8s(t *testing.T) {
+
+	var r1 interface{} = nil
+
 	type args struct {
 		reply interface{}
 		err   error
@@ -282,6 +309,8 @@ func TestUint8s(t *testing.T) {
 		wantErr bool
 	}{
 		// TODO: Add test cases.
+		{ "test:Uint8s:1", args{r1,nil},[]uint8{},true },
+
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -290,8 +319,11 @@ func TestUint8s(t *testing.T) {
 				t.Errorf("Uint8s() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if !reflect.DeepEqual(got, tt.want) {
-				t.Errorf("Uint8s() got = %v, want %v", got, tt.want)
+			if tt.wantErr == false {
+
+				if !reflect.DeepEqual(got, tt.want) {
+					t.Errorf("Uint8s() got = %v, want %v", got, tt.want)
+				}
 			}
 		})
 	}
