@@ -734,7 +734,9 @@ func TestPipelinedClient_ScriptSet(t *testing.T) {
 
 func TestPipelinedClient_TensorGet(t *testing.T) {
 	var r1 []interface{} = nil
-	t1:= "test:PipelinedClient_TensorGet:1"
+	t1 := "test:PipelinedClient_TensorGet:1"
+	t2 := "test:PipelinedClient_TensorGet:2:ActiveConn=nil"
+
 	client := Connect("redis://localhost:6379", nil)
 	errortset := client.TensorSet(t1, TypeFloat, []int{1, 30}, []float32{0,
 		-1.3598071336738,
@@ -770,6 +772,40 @@ func TestPipelinedClient_TensorGet(t *testing.T) {
 		t.Error(errortset)
 	}
 
+	errortset2 := client.TensorSet(t2, TypeFloat, []int{1, 30}, []float32{0,
+		-1.3598071336738,
+		-0.0727811733098497,
+		2.53634673796914,
+		1.37815522427443,
+		-0.338320769942518,
+		0.462387777762292,
+		0.239598554061257,
+		0.0986979012610507,
+		0.363786969611213,
+		0.0907941719789316,
+		-0.551599533260813,
+		-0.617800855762348,
+		-0.991389847235408,
+		-0.311169353699879,
+		1.46817697209427,
+		-0.470400525259478,
+		0.207971241929242,
+		0.0257905801985591,
+		0.403992960255733,
+		0.251412098239705,
+		-0.018306777944153,
+		0.277837575558899,
+		-0.110473910188767,
+		0.0669280749146731,
+		0.128539358273528,
+		-0.189114843888824,
+		0.133558376740387,
+		-0.0210530534538215,
+		149.62})
+	if errortset2 != nil {
+		t.Error(errortset2)
+	}
+
 	type fields struct {
 		Pool            *redis.Pool
 		PipelineMaxSize int
@@ -788,6 +824,7 @@ func TestPipelinedClient_TensorGet(t *testing.T) {
 		wantErr  bool
 	}{
 		{ t1, fields{ pipelinedClient.Pool,pipelinedClient.PipelineMaxSize, pipelinedClient.PipelinePos, pipelinedClient.ActiveConn }, args{t1, TensorContentTypeMeta }, r1, false },
+		{ t2, fields{ pipelinedClient.Pool,pipelinedClient.PipelineMaxSize, pipelinedClient.PipelinePos, nil }, args{t2, TensorContentTypeMeta }, r1, false },
 
 	}
 	for _, tt := range tests {
@@ -847,6 +884,8 @@ func TestPipelinedClient_TensorSet(t *testing.T) {
 }
 
 func TestPipelinedClient_pipeIncr(t *testing.T) {
+	//t1 := "test:PipelinedClient_pipeIncr:1:Error"
+
 	type fields struct {
 		Pool            *redis.Pool
 		PipelineMaxSize int
@@ -862,6 +901,7 @@ func TestPipelinedClient_pipeIncr(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
+
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
