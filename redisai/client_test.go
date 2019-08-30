@@ -841,6 +841,7 @@ func TestClient_TensorGet(t *testing.T) {
 func TestClient_TensorGetBlob(t *testing.T) {
 	valuesByte := []byte{1, 2, 3, 4}
 	keyByte := "test:TensorGetBlog:[]byte:1"
+	keyUnexistant := "test:TensorGetMeta:Unexistant"
 
 	shp := []int{1, 4}
 	pclient.TensorSet(keyByte, TypeInt8, shp, valuesByte)
@@ -861,6 +862,8 @@ func TestClient_TensorGetBlob(t *testing.T) {
 		wantErr   bool
 	}{
 		{keyByte, fields{pclient.pool}, args{keyByte}, TypeInt8, shp, valuesByte, false},
+		{keyUnexistant, fields{pclient.pool}, args{keyUnexistant}, TypeInt8, shp, valuesByte, true},
+
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -872,14 +875,17 @@ func TestClient_TensorGetBlob(t *testing.T) {
 				t.Errorf("TensorGetBlob() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if gotDt != tt.wantDt {
-				t.Errorf("TensorGetBlob() gotDt = %v, want %v", gotDt, tt.wantDt)
-			}
-			if !reflect.DeepEqual(gotShape, tt.wantShape) {
-				t.Errorf("TensorGetBlob() gotShape = %v, want %v", gotShape, tt.wantShape)
-			}
-			if !reflect.DeepEqual(gotData, tt.wantData) {
-				t.Errorf("TensorGetBlob() gotData = %v, want %v", gotData, tt.wantData)
+
+			if tt.wantErr == false {
+				if gotDt != tt.wantDt {
+					t.Errorf("TensorGetBlob() gotDt = %v, want %v", gotDt, tt.wantDt)
+				}
+				if !reflect.DeepEqual(gotShape, tt.wantShape) {
+					t.Errorf("TensorGetBlob() gotShape = %v, want %v", gotShape, tt.wantShape)
+				}
+				if !reflect.DeepEqual(gotData, tt.wantData) {
+					t.Errorf("TensorGetBlob() gotData = %v, want %v", gotData, tt.wantData)
+				}
 			}
 		})
 	}
@@ -897,6 +903,9 @@ func TestClient_TensorGetMeta(t *testing.T) {
 
 	keyUint8 := "test:TensorGetMeta:TypeUint8:1"
 	keyUint16 := "test:TensorGetMeta:TypeUint16:1"
+
+	keyUnexistant := "test:TensorGetMeta:Unexistant"
+
 
 	shp := []int{1, 2}
 
@@ -931,6 +940,8 @@ func TestClient_TensorGetMeta(t *testing.T) {
 		{keyInt16, fields{pclient.pool}, args{keyInt16}, TypeInt16, shp, false},
 		{keyInt32, fields{pclient.pool}, args{keyInt32}, TypeInt32, shp, false},
 		{keyInt64, fields{pclient.pool}, args{keyInt64}, TypeInt64, shp, false},
+		{keyUnexistant, fields{pclient.pool}, args{keyUnexistant}, TypeInt64, shp, true},
+
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -942,11 +953,13 @@ func TestClient_TensorGetMeta(t *testing.T) {
 				t.Errorf("TensorGetMeta() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if gotDt != tt.wantDt {
-				t.Errorf("TensorGetMeta() gotDt = %v, want %v", gotDt, tt.wantDt)
-			}
-			if !reflect.DeepEqual(gotShape, tt.wantShape) {
-				t.Errorf("TensorGetMeta() gotShape = %v, want %v", gotShape, tt.wantShape)
+			if tt.wantErr == false {
+				if gotDt != tt.wantDt {
+					t.Errorf("TensorGetMeta() gotDt = %v, want %v", gotDt, tt.wantDt)
+				}
+				if !reflect.DeepEqual(gotShape, tt.wantShape) {
+					t.Errorf("TensorGetMeta() gotShape = %v, want %v", gotShape, tt.wantShape)
+				}
 			}
 		})
 	}
