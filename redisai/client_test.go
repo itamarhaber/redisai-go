@@ -10,7 +10,7 @@ import (
 
 // Global vars:
 var (
-	pclient = Connect("redis://localhost:6379", nil)
+	simpleClient = Connect("redis://localhost:6379", nil)
 )
 
 func TestClient_LoadBackend(t *testing.T) {
@@ -28,7 +28,7 @@ func TestClient_LoadBackend(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyTest1, fields{pclient.Pool}, args{BackendTF, "unexistant"}, true},
+		{keyTest1, fields{simpleClient.Pool}, args{BackendTF, "unexistant"}, true},
 
 		// TODO: Add test cases.
 	}
@@ -51,7 +51,7 @@ func TestClient_ModelDel(t *testing.T) {
 		t.Errorf("Error preparing for ModelDel(), while issuing ModelSet. error = %v", err)
 		return
 	}
-	err = pclient.ModelSet(keyModel1, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"})
+	err = simpleClient.ModelSet(keyModel1, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"})
 	if err != nil {
 		t.Errorf("Error preparing for ModelDel(), while issuing ModelSet. error = %v", err)
 		return
@@ -68,7 +68,7 @@ func TestClient_ModelDel(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyModel1, fields{pclient.Pool}, args{keyModel1}, false},
+		{keyModel1, fields{simpleClient.Pool}, args{keyModel1}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -90,7 +90,7 @@ func TestClient_ModelGet(t *testing.T) {
 		t.Errorf("Error preparing for ModelGet(), while issuing ModelSet. error = %v", err)
 		return
 	}
-	err = pclient.ModelSet(keyModel1, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"})
+	err = simpleClient.ModelSet(keyModel1, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"})
 	if err != nil {
 		t.Errorf("Error preparing for ModelGet(), while issuing ModelSet. error = %v", err)
 		return
@@ -113,10 +113,10 @@ func TestClient_ModelGet(t *testing.T) {
 		testDevice  bool
 		testData    bool
 	}{
-		{keyModelUnexistent1, fields{pclient.Pool}, args{keyModelUnexistent1}, BackendTF, DeviceCPU, data, true, false, false, false},
-		{keyModel1, fields{pclient.Pool}, args{keyModel1}, BackendTF, DeviceCPU, data, false, true, true, false},
+		{keyModelUnexistent1, fields{simpleClient.Pool}, args{keyModelUnexistent1}, BackendTF, DeviceCPU, data, true, false, false, false},
+		{keyModel1, fields{simpleClient.Pool}, args{keyModel1}, BackendTF, DeviceCPU, data, false, true, true, false},
 		// TODO: check why is failing
-		//{ keyModel1, fields{ pclient.Pool } , args{ keyModel1 }, BackendTF, DeviceCPU ,data ,false,true,true,true},
+		//{ keyModel1, fields{ simpleClient.Pool } , args{ keyModel1 }, BackendTF, DeviceCPU ,data ,false,true,true,true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -160,13 +160,13 @@ func TestClient_ModelRun(t *testing.T) {
 		t.Errorf("Error preparing for ModelRun(), while issuing ModelSet. error = %v", err)
 		return
 	}
-	err = pclient.ModelSet(keyModel1, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"})
+	err = simpleClient.ModelSet(keyModel1, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"})
 	if err != nil {
 		t.Errorf("Error preparing for ModelRun(), while issuing ModelSet. error = %v", err)
 		return
 	}
 
-	errortset := pclient.TensorSet(keyTransaction1, TypeFloat, []int{1, 30}, []float32{0,
+	errortset := simpleClient.TensorSet(keyTransaction1, TypeFloat, []int{1, 30}, []float32{0,
 		-1.3598071336738,
 		-0.0727811733098497,
 		2.53634673796914,
@@ -200,7 +200,7 @@ func TestClient_ModelRun(t *testing.T) {
 		t.Error(errortset)
 	}
 
-	errortsetReference := pclient.TensorSet(keyReference1, TypeFloat, []int{256}, []float32{
+	errortsetReference := simpleClient.TensorSet(keyReference1, TypeFloat, []int{256}, []float32{
 		0.4961020023739511,
 		0.25008885268782743,
 		0.17356637875650527,
@@ -475,8 +475,8 @@ func TestClient_ModelRun(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyModel1, fields{pclient.Pool}, args{keyModel1, []string{keyTransaction1, keyReference1}, []string{keyOutput1}}, false},
-		{keyModelWrongInput1, fields{pclient.Pool}, args{keyModel1, []string{keyTransaction1}, []string{keyOutput1}}, true},
+		{keyModel1, fields{simpleClient.Pool}, args{keyModel1, []string{keyTransaction1, keyReference1}, []string{keyOutput1}}, false},
+		{keyModelWrongInput1, fields{simpleClient.Pool}, args{keyModel1, []string{keyTransaction1}, []string{keyOutput1}}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -518,8 +518,8 @@ func TestClient_ModelSet(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyModelSet1, fields{pclient.Pool}, args{keyModelSet1, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"}}, false},
-		{keyModelSetUnexistant, fields{pclient.Pool}, args{keyModelSetUnexistant, BackendTF, DeviceCPU, dataUnexistant, []string{"transaction", "reference"}, []string{"output"}}, true},
+		{keyModelSet1, fields{simpleClient.Pool}, args{keyModelSet1, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"}}, false},
+		{keyModelSetUnexistant, fields{simpleClient.Pool}, args{keyModelSetUnexistant, BackendTF, DeviceCPU, dataUnexistant, []string{"transaction", "reference"}, []string{"output"}}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -553,8 +553,8 @@ func TestClient_ModelSetFromFile(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyModelDontExist1, fields{pclient.Pool}, args{keyModelDontExist1, BackendTF, DeviceCPU, "./../tests/testdata/dontexist", []string{"transaction", "reference"}, []string{"output"}}, true},
-		{keyModel1, fields{pclient.Pool}, args{keyModel1, BackendTF, DeviceCPU, "./../tests/testdata/models/tensorflow/creditcardfraud.pb", []string{"transaction", "reference"}, []string{"output"}}, false},
+		{keyModelDontExist1, fields{simpleClient.Pool}, args{keyModelDontExist1, BackendTF, DeviceCPU, "./../tests/testdata/dontexist", []string{"transaction", "reference"}, []string{"output"}}, true},
+		{keyModel1, fields{simpleClient.Pool}, args{keyModel1, BackendTF, DeviceCPU, "./../tests/testdata/models/tensorflow/creditcardfraud.pb", []string{"transaction", "reference"}, []string{"output"}}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -573,7 +573,7 @@ func TestClient_ScriptDel(t *testing.T) {
 	keyScriptUnexistant := "test:ScriptDel:Unexistant:1"
 	scriptBin := "def bar(a, b):\n    return a + b\n"
 
-	err := pclient.ScriptSet(keyScript, DeviceCPU, scriptBin)
+	err := simpleClient.ScriptSet(keyScript, DeviceCPU, scriptBin)
 	if err != nil {
 		t.Errorf("Error preparing for ScriptDel(), while issuing ScriptSet. error = %v", err)
 		return
@@ -590,8 +590,8 @@ func TestClient_ScriptDel(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyScript, fields{pclient.Pool}, args{keyScript}, false},
-		{keyScriptUnexistant, fields{pclient.Pool}, args{keyScriptUnexistant}, true},
+		{keyScript, fields{simpleClient.Pool}, args{keyScript}, false},
+		{keyScriptUnexistant, fields{simpleClient.Pool}, args{keyScriptUnexistant}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -610,7 +610,7 @@ func TestClient_ScriptGet(t *testing.T) {
 	keyScriptEmpty := "test:ScriptGetEmpty:1"
 	scriptBin := ""
 
-	err := pclient.ScriptSet(keyScript, DeviceCPU, scriptBin)
+	err := simpleClient.ScriptSet(keyScript, DeviceCPU, scriptBin)
 	if err != nil {
 		t.Errorf("Error preparing for ScriptGet(), while issuing ScriptSet. error = %v", err)
 		return
@@ -630,8 +630,8 @@ func TestClient_ScriptGet(t *testing.T) {
 		wantErr  bool
 	}{
 		//TODO: revise this
-		{ keyScript, fields{ pclient.Pool} , args{keyScript }, DeviceCPU , "",false},
-		{keyScriptEmpty, fields{pclient.Pool}, args{keyScriptEmpty}, DeviceCPU, "",true},
+		{ keyScript, fields{simpleClient.Pool} , args{keyScript }, DeviceCPU , "",false},
+		{keyScriptEmpty, fields{simpleClient.Pool}, args{keyScriptEmpty}, DeviceCPU, "",true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -663,7 +663,7 @@ func TestClient_ScriptRun(t *testing.T) {
 
 	scriptBin := "def bar(a, b):\n    return a + b\n"
 
-	err := pclient.ScriptSet(keyScript, DeviceCPU, scriptBin)
+	err := simpleClient.ScriptSet(keyScript, DeviceCPU, scriptBin)
 	if err != nil {
 		t.Errorf("Error preparing for ScriptRun(), while issuing ScriptSet. error = %v", err)
 		return
@@ -684,7 +684,7 @@ func TestClient_ScriptRun(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyScriptEmpty, fields{pclient.Pool}, args{keyScriptEmpty, "", []string{""}, []string{""}}, true},
+		{keyScriptEmpty, fields{simpleClient.Pool}, args{keyScriptEmpty, "", []string{""}, []string{""}}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -715,7 +715,7 @@ func TestClient_ScriptSet(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyScriptError, fields{pclient.Pool}, args{keyScriptError, DeviceCPU, scriptBin}, true},
+		{keyScriptError, fields{simpleClient.Pool}, args{keyScriptError, DeviceCPU, scriptBin}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -747,8 +747,8 @@ func TestClient_ScriptSetFromFile(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyScript1, fields{pclient.Pool}, args{keyScript1, DeviceCPU, "./../tests/testdata/dontexist"}, true},
-		{keyScript2, fields{pclient.Pool}, args{keyScript2, DeviceCPU, "./../tests/testdata/script.txt"}, false},
+		{keyScript1, fields{simpleClient.Pool}, args{keyScript1, DeviceCPU, "./../tests/testdata/dontexist"}, true},
+		{keyScript2, fields{simpleClient.Pool}, args{keyScript2, DeviceCPU, "./../tests/testdata/script.txt"}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -789,18 +789,18 @@ func TestClient_TensorGet(t *testing.T) {
 	keyUint16 := "test:TensorGet:TypeUint16:1"
 	shp := []int{1}
 	shpByteSlice := []int{1, 5}
-	pclient.TensorSet(keyByteSlice, TypeUint8, shpByteSlice, valuesByteSlice)
+	simpleClient.TensorSet(keyByteSlice, TypeUint8, shpByteSlice, valuesByteSlice)
 
-	pclient.TensorSet(keyFloat32, TypeFloat32, shp, valuesFloat32)
-	pclient.TensorSet(keyFloat64, TypeFloat64, shp, valuesFloat64)
+	simpleClient.TensorSet(keyFloat32, TypeFloat32, shp, valuesFloat32)
+	simpleClient.TensorSet(keyFloat64, TypeFloat64, shp, valuesFloat64)
 
-	pclient.TensorSet(keyInt8, TypeInt8, shp, valuesInt8)
-	pclient.TensorSet(keyInt16, TypeInt16, shp, valuesInt16)
-	pclient.TensorSet(keyInt32, TypeInt32, shp, valuesInt32)
-	pclient.TensorSet(keyInt64, TypeInt64, shp, valuesInt64)
+	simpleClient.TensorSet(keyInt8, TypeInt8, shp, valuesInt8)
+	simpleClient.TensorSet(keyInt16, TypeInt16, shp, valuesInt16)
+	simpleClient.TensorSet(keyInt32, TypeInt32, shp, valuesInt32)
+	simpleClient.TensorSet(keyInt64, TypeInt64, shp, valuesInt64)
 
-	pclient.TensorSet(keyUint8, TypeUint8, shp, valuesUint8)
-	pclient.TensorSet(keyUint16, TypeUint16, shp, valuesUint16)
+	simpleClient.TensorSet(keyUint8, TypeUint8, shp, valuesUint8)
+	simpleClient.TensorSet(keyUint16, TypeUint16, shp, valuesUint16)
 
 	type fields struct {
 		pool *redis.Pool
@@ -821,18 +821,18 @@ func TestClient_TensorGet(t *testing.T) {
 		compareData  bool
 		wantErr      bool
 	}{
-		{keyByteSlice, fields{pclient.Pool}, args{keyByteSlice, TensorContentTypeBlob}, TypeUint8, shpByteSlice, valuesByteSlice, true, true, true, false},
+		{keyByteSlice, fields{simpleClient.Pool}, args{keyByteSlice, TensorContentTypeBlob}, TypeUint8, shpByteSlice, valuesByteSlice, true, true, true, false},
 
-		{keyFloat32, fields{pclient.Pool}, args{keyFloat32, TensorContentTypeValues}, TypeFloat32, shp, valuesFloat32, true, true, true, false},
-		{keyFloat64, fields{pclient.Pool}, args{keyFloat64, TensorContentTypeValues}, TypeFloat64, shp, valuesFloat64, true, true, true, false},
+		{keyFloat32, fields{simpleClient.Pool}, args{keyFloat32, TensorContentTypeValues}, TypeFloat32, shp, valuesFloat32, true, true, true, false},
+		{keyFloat64, fields{simpleClient.Pool}, args{keyFloat64, TensorContentTypeValues}, TypeFloat64, shp, valuesFloat64, true, true, true, false},
 
-		{keyInt8, fields{pclient.Pool}, args{keyInt8, TensorContentTypeValues}, TypeInt8, shp, valuesInt8, true, true, true, false},
-		{keyInt16, fields{pclient.Pool}, args{keyInt16, TensorContentTypeValues}, TypeInt16, shp, valuesInt16, true, true, true, false},
-		{keyInt32, fields{pclient.Pool}, args{keyInt32, TensorContentTypeValues}, TypeInt32, shp, valuesInt32, true, true, true, false},
-		{keyInt64, fields{pclient.Pool}, args{keyInt64, TensorContentTypeValues}, TypeInt64, shp, valuesInt64, true, true, true, false},
+		{keyInt8, fields{simpleClient.Pool}, args{keyInt8, TensorContentTypeValues}, TypeInt8, shp, valuesInt8, true, true, true, false},
+		{keyInt16, fields{simpleClient.Pool}, args{keyInt16, TensorContentTypeValues}, TypeInt16, shp, valuesInt16, true, true, true, false},
+		{keyInt32, fields{simpleClient.Pool}, args{keyInt32, TensorContentTypeValues}, TypeInt32, shp, valuesInt32, true, true, true, false},
+		{keyInt64, fields{simpleClient.Pool}, args{keyInt64, TensorContentTypeValues}, TypeInt64, shp, valuesInt64, true, true, true, false},
 
-		{keyUint8, fields{pclient.Pool}, args{keyUint8, TensorContentTypeValues}, TypeUint8, shp, valuesUint8, true, true, true, false},
-		{keyUint16, fields{pclient.Pool}, args{keyUint16, TensorContentTypeValues}, TypeUint16, shp, valuesUint16, true, true, true, false},
+		{keyUint8, fields{simpleClient.Pool}, args{keyUint8, TensorContentTypeValues}, TypeUint8, shp, valuesUint8, true, true, true, false},
+		{keyUint16, fields{simpleClient.Pool}, args{keyUint16, TensorContentTypeValues}, TypeUint16, shp, valuesUint16, true, true, true, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -863,7 +863,7 @@ func TestClient_TensorGetBlob(t *testing.T) {
 	keyUnexistant := "test:TensorGetMeta:Unexistant"
 
 	shp := []int{1, 4}
-	pclient.TensorSet(keyByte, TypeInt8, shp, valuesByte)
+	simpleClient.TensorSet(keyByte, TypeInt8, shp, valuesByte)
 
 	type fields struct {
 		pool *redis.Pool
@@ -880,8 +880,8 @@ func TestClient_TensorGetBlob(t *testing.T) {
 		wantData  []byte
 		wantErr   bool
 	}{
-		{keyByte, fields{pclient.Pool}, args{keyByte}, TypeInt8, shp, valuesByte, false},
-		{keyUnexistant, fields{pclient.Pool}, args{keyUnexistant}, TypeInt8, shp, valuesByte, true},
+		{keyByte, fields{simpleClient.Pool}, args{keyByte}, TypeInt8, shp, valuesByte, false},
+		{keyUnexistant, fields{simpleClient.Pool}, args{keyUnexistant}, TypeInt8, shp, valuesByte, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -926,16 +926,16 @@ func TestClient_TensorGetMeta(t *testing.T) {
 
 	shp := []int{1, 2}
 
-	pclient.TensorSet(keyFloat32, TypeFloat32, shp, nil)
-	pclient.TensorSet(keyFloat64, TypeFloat64, shp, nil)
+	simpleClient.TensorSet(keyFloat32, TypeFloat32, shp, nil)
+	simpleClient.TensorSet(keyFloat64, TypeFloat64, shp, nil)
 
-	pclient.TensorSet(keyInt8, TypeInt8, shp, nil)
-	pclient.TensorSet(keyInt16, TypeInt16, shp, nil)
-	pclient.TensorSet(keyInt32, TypeInt32, shp, nil)
-	pclient.TensorSet(keyInt64, TypeInt64, shp, nil)
+	simpleClient.TensorSet(keyInt8, TypeInt8, shp, nil)
+	simpleClient.TensorSet(keyInt16, TypeInt16, shp, nil)
+	simpleClient.TensorSet(keyInt32, TypeInt32, shp, nil)
+	simpleClient.TensorSet(keyInt64, TypeInt64, shp, nil)
 
-	pclient.TensorSet(keyUint8, TypeUint8, shp, nil)
-	pclient.TensorSet(keyUint16, TypeUint16, shp, nil)
+	simpleClient.TensorSet(keyUint8, TypeUint8, shp, nil)
+	simpleClient.TensorSet(keyUint16, TypeUint16, shp, nil)
 
 	type fields struct {
 		pool *redis.Pool
@@ -951,13 +951,13 @@ func TestClient_TensorGetMeta(t *testing.T) {
 		wantShape []int
 		wantErr   bool
 	}{
-		{keyFloat32, fields{pclient.Pool}, args{keyFloat32}, TypeFloat32, shp, false},
-		{keyFloat64, fields{pclient.Pool}, args{keyFloat64}, TypeFloat64, shp, false},
-		{keyInt8, fields{pclient.Pool}, args{keyInt8}, TypeInt8, shp, false},
-		{keyInt16, fields{pclient.Pool}, args{keyInt16}, TypeInt16, shp, false},
-		{keyInt32, fields{pclient.Pool}, args{keyInt32}, TypeInt32, shp, false},
-		{keyInt64, fields{pclient.Pool}, args{keyInt64}, TypeInt64, shp, false},
-		{keyUnexistant, fields{pclient.Pool}, args{keyUnexistant}, TypeInt64, shp, true},
+		{keyFloat32, fields{simpleClient.Pool}, args{keyFloat32}, TypeFloat32, shp, false},
+		{keyFloat64, fields{simpleClient.Pool}, args{keyFloat64}, TypeFloat64, shp, false},
+		{keyInt8, fields{simpleClient.Pool}, args{keyInt8}, TypeInt8, shp, false},
+		{keyInt16, fields{simpleClient.Pool}, args{keyInt16}, TypeInt16, shp, false},
+		{keyInt32, fields{simpleClient.Pool}, args{keyInt32}, TypeInt32, shp, false},
+		{keyInt64, fields{simpleClient.Pool}, args{keyInt64}, TypeInt64, shp, false},
+		{keyUnexistant, fields{simpleClient.Pool}, args{keyUnexistant}, TypeInt64, shp, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1006,16 +1006,16 @@ func TestClient_TensorGetValues(t *testing.T) {
 	keyUnexistant := "test:TensorGetValues:Unexistant"
 
 	shp := []int{1}
-	pclient.TensorSet(keyFloat32, TypeFloat32, shp, valuesFloat32)
-	pclient.TensorSet(keyFloat64, TypeFloat64, shp, valuesFloat64)
+	simpleClient.TensorSet(keyFloat32, TypeFloat32, shp, valuesFloat32)
+	simpleClient.TensorSet(keyFloat64, TypeFloat64, shp, valuesFloat64)
 
-	pclient.TensorSet(keyInt8, TypeInt8, shp, valuesInt8)
-	pclient.TensorSet(keyInt16, TypeInt16, shp, valuesInt16)
-	pclient.TensorSet(keyInt32, TypeInt32, shp, valuesInt32)
-	pclient.TensorSet(keyInt64, TypeInt64, shp, valuesInt64)
+	simpleClient.TensorSet(keyInt8, TypeInt8, shp, valuesInt8)
+	simpleClient.TensorSet(keyInt16, TypeInt16, shp, valuesInt16)
+	simpleClient.TensorSet(keyInt32, TypeInt32, shp, valuesInt32)
+	simpleClient.TensorSet(keyInt64, TypeInt64, shp, valuesInt64)
 
-	pclient.TensorSet(keyUint8, TypeUint8, shp, valuesUint8)
-	pclient.TensorSet(keyUint16, TypeUint16, shp, valuesUint16)
+	simpleClient.TensorSet(keyUint8, TypeUint8, shp, valuesUint8)
+	simpleClient.TensorSet(keyUint16, TypeUint16, shp, valuesUint16)
 
 	type fields struct {
 		pool *redis.Pool
@@ -1032,18 +1032,18 @@ func TestClient_TensorGetValues(t *testing.T) {
 		wantData  interface{}
 		wantErr   bool
 	}{
-		{keyFloat32, fields{pclient.Pool}, args{keyFloat32}, TypeFloat32, shp, valuesFloat32, false},
-		{keyFloat64, fields{pclient.Pool}, args{keyFloat64}, TypeFloat64, shp, valuesFloat64, false},
+		{keyFloat32, fields{simpleClient.Pool}, args{keyFloat32}, TypeFloat32, shp, valuesFloat32, false},
+		{keyFloat64, fields{simpleClient.Pool}, args{keyFloat64}, TypeFloat64, shp, valuesFloat64, false},
 
-		{keyInt8, fields{pclient.Pool}, args{keyInt8}, TypeInt8, shp, valuesInt8, false},
-		{keyInt16, fields{pclient.Pool}, args{keyInt16}, TypeInt16, shp, valuesInt16, false},
-		{keyInt32, fields{pclient.Pool}, args{keyInt32}, TypeInt32, shp, valuesInt32, false},
-		{keyInt64, fields{pclient.Pool}, args{keyInt64}, TypeInt64, shp, valuesInt64, false},
+		{keyInt8, fields{simpleClient.Pool}, args{keyInt8}, TypeInt8, shp, valuesInt8, false},
+		{keyInt16, fields{simpleClient.Pool}, args{keyInt16}, TypeInt16, shp, valuesInt16, false},
+		{keyInt32, fields{simpleClient.Pool}, args{keyInt32}, TypeInt32, shp, valuesInt32, false},
+		{keyInt64, fields{simpleClient.Pool}, args{keyInt64}, TypeInt64, shp, valuesInt64, false},
 
-		{keyUint8, fields{pclient.Pool}, args{keyUint8}, TypeUint8, shp, valuesUint8, false},
-		{keyUint16, fields{pclient.Pool}, args{keyUint16}, TypeUint16, shp, valuesUint16, false},
+		{keyUint8, fields{simpleClient.Pool}, args{keyUint8}, TypeUint8, shp, valuesUint8, false},
+		{keyUint16, fields{simpleClient.Pool}, args{keyUint16}, TypeUint16, shp, valuesUint16, false},
 
-		{keyUnexistant, fields{pclient.Pool}, args{keyUnexistant}, TypeUint16, shp, valuesUint8, true},
+		{keyUnexistant, fields{simpleClient.Pool}, args{keyUnexistant}, TypeUint16, shp, valuesUint8, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1121,23 +1121,23 @@ func TestClient_TensorSet(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyFloat32, fields{pclient.Pool}, args{keyFloat32, TypeFloat, shp, valuesFloat32}, false},
-		{keyFloat64, fields{pclient.Pool}, args{keyFloat64, TypeFloat64, shp, valuesFloat64}, false},
+		{keyFloat32, fields{simpleClient.Pool}, args{keyFloat32, TypeFloat, shp, valuesFloat32}, false},
+		{keyFloat64, fields{simpleClient.Pool}, args{keyFloat64, TypeFloat64, shp, valuesFloat64}, false},
 
-		{keyInt8, fields{pclient.Pool}, args{keyInt8, TypeInt8, shp, valuesInt8}, false},
-		{keyInt16, fields{pclient.Pool}, args{keyInt16, TypeInt16, shp, valuesInt16}, false},
-		{keyInt32, fields{pclient.Pool}, args{keyInt32, TypeInt32, shp, valuesInt32}, false},
-		{keyInt64, fields{pclient.Pool}, args{keyInt64, TypeInt64, shp, valuesInt64}, false},
+		{keyInt8, fields{simpleClient.Pool}, args{keyInt8, TypeInt8, shp, valuesInt8}, false},
+		{keyInt16, fields{simpleClient.Pool}, args{keyInt16, TypeInt16, shp, valuesInt16}, false},
+		{keyInt32, fields{simpleClient.Pool}, args{keyInt32, TypeInt32, shp, valuesInt32}, false},
+		{keyInt64, fields{simpleClient.Pool}, args{keyInt64, TypeInt64, shp, valuesInt64}, false},
 
-		{keyUint8, fields{pclient.Pool}, args{keyUint8, TypeUint8, shp, valuesUint8}, false},
-		{keyUint16, fields{pclient.Pool}, args{keyUint16, TypeUint16, shp, valuesUint16}, false},
-		{keyUint32, fields{pclient.Pool}, args{keyUint32, TypeUint8, shp, valuesUint32}, true},
-		{keyUint64, fields{pclient.Pool}, args{keyUint64, TypeUint8, shp, valuesUint64}, true},
+		{keyUint8, fields{simpleClient.Pool}, args{keyUint8, TypeUint8, shp, valuesUint8}, false},
+		{keyUint16, fields{simpleClient.Pool}, args{keyUint16, TypeUint16, shp, valuesUint16}, false},
+		{keyUint32, fields{simpleClient.Pool}, args{keyUint32, TypeUint8, shp, valuesUint32}, true},
+		{keyUint64, fields{simpleClient.Pool}, args{keyUint64, TypeUint8, shp, valuesUint64}, true},
 
-		{keyInt8Meta, fields{pclient.Pool}, args{keyInt8Meta, TypeUint8, shp, nil}, false},
-		{keyByte, fields{pclient.Pool}, args{keyByte, TypeUint8, shp, valuesByte}, false},
+		{keyInt8Meta, fields{simpleClient.Pool}, args{keyInt8Meta, TypeUint8, shp, nil}, false},
+		{keyByte, fields{simpleClient.Pool}, args{keyByte, TypeUint8, shp, valuesByte}, false},
 
-		{"test:TestClient_TensorSet:1:FaultyDims", fields{pclient.Pool}, args{"test:TestClient_TensorSet:1:FaultyDims", TypeFloat, []int{1, 10}, []float32{1}}, true},
+		{"test:TestClient_TensorSet:1:FaultyDims", fields{simpleClient.Pool}, args{"test:TestClient_TensorSet:1:FaultyDims", TypeFloat, []int{1, 10}, []float32{1}}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
