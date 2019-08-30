@@ -10,12 +10,12 @@ import (
 
 // Client is a RedisAI client
 type Client struct {
-	pool *redis.Pool
+	Pool *redis.Pool
 }
 
 func (c *Client) TensorGet(name string, ct TensorContentType) (data []interface{}, err error) {
 	args := redis.Args{}.Add(name, ct)
-	conn := c.pool.Get()
+	conn := c.Pool.Get()
 	defer conn.Close()
 	resp, err := conn.Do("AI.TENSORGET", args...)
 	data, err = processTensorReplyMeta(resp,err)
@@ -58,7 +58,7 @@ func (c *Client) TensorGetBlob(name string) (dt DataType, shape []int, data []by
 
 func (c *Client) ModelGet(name string) (data []interface{}, err error) {
 	args := redis.Args{}.Add(name)
-	conn := c.pool.Get()
+	conn := c.Pool.Get()
 	defer conn.Close()
 	respInitial, err := conn.Do("AI.MODELGET", args...)
 	if err != nil {
@@ -80,7 +80,7 @@ func (c *Client) ModelGet(name string) (data []interface{}, err error) {
 
 func (c *Client) ModelDel(name string) (err error) {
 	args := redis.Args{}.Add(name)
-	conn := c.pool.Get()
+	conn := c.Pool.Get()
 	defer conn.Close()
 	_, err = conn.Do("AI.MODELDEL", args...)
 	return
@@ -88,7 +88,7 @@ func (c *Client) ModelDel(name string) (err error) {
 
 func (c *Client) ScriptGet(name string) (data []interface{}, err error) {
 	args := redis.Args{}.Add(name)
-	conn := c.pool.Get()
+	conn := c.Pool.Get()
 	defer conn.Close()
 	respInitial, err := conn.Do("AI.SCRIPTGET", args...)
 	if err != nil {
@@ -109,7 +109,7 @@ func (c *Client) ScriptGet(name string) (data []interface{}, err error) {
 
 func (c *Client) ScriptDel(name string) (err error) {
 	args := redis.Args{}.Add(name)
-	conn := c.pool.Get()
+	conn := c.Pool.Get()
 	defer conn.Close()
 	_, err = redis.String(conn.Do("AI.SCRIPTDEL", args...))
 	if err != nil {
@@ -120,7 +120,7 @@ func (c *Client) ScriptDel(name string) (err error) {
 
 func (c *Client) LoadBackend(backend_identifier BackendType, location string) (err error) {
 	args := redis.Args{}.Add("LOADBACKEND").Add(backend_identifier).Add(location)
-	conn := c.pool.Get()
+	conn := c.Pool.Get()
 	defer conn.Close()
 	_, err = redis.String(conn.Do("AI.CONFIG", args...))
 	if err != nil {
@@ -143,7 +143,7 @@ func Connect(url string, pool *redis.Pool) (c *Client) {
 	}
 
 	c = &Client{
-		pool: cpool,
+		Pool: cpool,
 	}
 	return c
 }
@@ -159,7 +159,7 @@ func (c *Client) ModelSet(name string, backend BackendType, device DeviceType, d
 	}
 	args = args.Add(data)
 
-	conn := c.pool.Get()
+	conn := c.Pool.Get()
 	defer conn.Close()
 	_, err = redis.String(conn.Do("AI.MODELSET", args...))
 	if err != nil {
@@ -180,7 +180,7 @@ func (c *Client) ModelSetFromFile(name string, backend BackendType, device Devic
 // ModelRun runs a RedisAI model
 func (c *Client) ModelRun(name string, inputs []string, outputs []string) ( err error ) {
 	args := ModelRunArgs(name, inputs, outputs, false)
-	conn := c.pool.Get()
+	conn := c.Pool.Get()
 	defer conn.Close()
 	_, err = redis.String(conn.Do("AI.MODELRUN", args...))
 	if err != nil {
@@ -192,7 +192,7 @@ func (c *Client) ModelRun(name string, inputs []string, outputs []string) ( err 
 // ScriptSet sets a RedisAI script from a blob
 func (c *Client) ScriptSet(name string, device DeviceType, script_source string) ( err error ) {
 	args := redis.Args{}.Add(name, device, script_source)
-	conn := c.pool.Get()
+	conn := c.Pool.Get()
 	defer conn.Close()
 	_, err = redis.String(conn.Do("AI.SCRIPTSET", args...))
 	if err != nil {
@@ -219,7 +219,7 @@ func (c *Client) ScriptRun(name string, fn string, inputs []string, outputs []st
 	if len(outputs) > 0 {
 		args = args.Add("OUTPUTS").AddFlat(outputs)
 	}
-	conn := c.pool.Get()
+	conn := c.Pool.Get()
 	defer conn.Close()
 
 	_, err = redis.String(conn.Do("AI.SCRIPTRUN", args...))
@@ -235,7 +235,7 @@ func (c *Client) TensorSet(name string, dt DataType, dims []int, data interface{
 	if err != nil {
 		return err
 	}
-	conn := c.pool.Get()
+	conn := c.Pool.Get()
 	defer conn.Close()
 	_, err = redis.String(conn.Do("AI.TENSORSET", args...))
 	if err != nil {
