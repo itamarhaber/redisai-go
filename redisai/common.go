@@ -246,7 +246,7 @@ func Float32s(reply interface{}, err error) ([]float32, error) {
 }
 
 
-// Uint16s is a helper that converts an array command reply to a []int8.
+// Uint16s is a helper that converts an array command reply to a []uint16.
 func Uint16s(reply interface{}, err error) ([]uint16, error) {
 	var result []uint16
 	tr , err := redis.Values( reply, err )
@@ -260,7 +260,7 @@ func Uint16s(reply interface{}, err error) ([]uint16, error) {
 }
 
 
-// Uint16s is a helper that converts an array command reply to a []int8.
+// Int16s is a helper that converts an array command reply to a []int16.
 func Int16s(reply interface{}, err error) ([]int16, error) {
 	var result []int16
 	tr , err := redis.Values( reply, err )
@@ -274,7 +274,7 @@ func Int16s(reply interface{}, err error) ([]int16, error) {
 }
 
 
-// Uint8s is a helper that converts an array command reply to a []int8.
+// Uint8s is a helper that converts an array command reply to a []uint8.
 func Uint8s(reply interface{}, err error) ([]uint8, error) {
 	var result []uint8
 	tr , err := redis.Values( reply, err )

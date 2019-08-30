@@ -517,9 +517,9 @@ func TestClient_ModelSet(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyModelSet1, fields{pclient.pool}, args{keyModelSet1, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"} }, false},
-		{keyModelSetUnexistant, fields{pclient.pool}, args{keyModelSetUnexistant, BackendTF, DeviceCPU, dataUnexistant, []string{"transaction", "reference"}, []string{"output"} }, true},
-		}
+		{keyModelSet1, fields{pclient.pool}, args{keyModelSet1, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"}}, false},
+		{keyModelSetUnexistant, fields{pclient.pool}, args{keyModelSetUnexistant, BackendTF, DeviceCPU, dataUnexistant, []string{"transaction", "reference"}, []string{"output"}}, true},
+	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
@@ -650,6 +650,18 @@ func TestClient_ScriptGet(t *testing.T) {
 }
 
 func TestClient_ScriptRun(t *testing.T) {
+
+	keyScript := "test:ScriptRun:1"
+	keyScriptEmpty := "test:ScriptRunEmpty:1"
+
+	scriptBin := "def bar(a, b):\n    return a + b\n"
+
+	err := pclient.ScriptSet(keyScript, DeviceCPU, scriptBin)
+	if err != nil {
+		t.Errorf("Error preparing for ScriptRun(), while issuing ScriptSet. error = %v", err)
+		return
+	}
+
 	type fields struct {
 		pool *redis.Pool
 	}
@@ -665,7 +677,7 @@ func TestClient_ScriptRun(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		// TODO: Add test cases.
+		{keyScriptEmpty, fields{pclient.pool}, args{keyScriptEmpty, "", []string{""}, []string{""}}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -696,7 +708,7 @@ func TestClient_ScriptSet(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{ keyScriptError, fields{ pclient.pool } , args{ keyScriptError, DeviceCPU, scriptBin }, true},
+		{keyScriptError, fields{pclient.pool}, args{keyScriptError, DeviceCPU, scriptBin}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -744,7 +756,7 @@ func TestClient_ScriptSetFromFile(t *testing.T) {
 }
 
 func TestClient_TensorGet(t *testing.T) {
-	valuesByteSlice := []byte{1,2,3,4,5}
+	valuesByteSlice := []byte{1, 2, 3, 4, 5}
 
 	valuesFloat32 := []float32{1.1}
 	valuesFloat64 := []float64{1.1}
@@ -769,7 +781,7 @@ func TestClient_TensorGet(t *testing.T) {
 	keyUint8 := "test:TensorGet:TypeUint8:1"
 	keyUint16 := "test:TensorGet:TypeUint16:1"
 	shp := []int{1}
-	shpByteSlice := []int{1,5}
+	shpByteSlice := []int{1, 5}
 	pclient.TensorSet(keyByteSlice, TypeUint8, shpByteSlice, valuesByteSlice)
 
 	pclient.TensorSet(keyFloat32, TypeFloat32, shp, valuesFloat32)
@@ -812,8 +824,8 @@ func TestClient_TensorGet(t *testing.T) {
 		{keyInt32, fields{pclient.pool}, args{keyInt32, TensorContentTypeValues}, TypeInt32, shp, valuesInt32, true, true, true, false},
 		{keyInt64, fields{pclient.pool}, args{keyInt64, TensorContentTypeValues}, TypeInt64, shp, valuesInt64, true, true, true, false},
 
-		{ keyUint8, fields{ pclient.pool } , args{ keyUint8, TensorContentTypeValues }, TypeUint8,shp,valuesUint8, true, true, true, false},
-		{ keyUint16, fields{ pclient.pool } , args{ keyUint16, TensorContentTypeValues }, TypeUint16,shp,valuesUint16, true, true, true, false},
+		{keyUint8, fields{pclient.pool}, args{keyUint8, TensorContentTypeValues}, TypeUint8, shp, valuesUint8, true, true, true, false},
+		{keyUint16, fields{pclient.pool}, args{keyUint16, TensorContentTypeValues}, TypeUint16, shp, valuesUint16, true, true, true, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -863,7 +875,6 @@ func TestClient_TensorGetBlob(t *testing.T) {
 	}{
 		{keyByte, fields{pclient.pool}, args{keyByte}, TypeInt8, shp, valuesByte, false},
 		{keyUnexistant, fields{pclient.pool}, args{keyUnexistant}, TypeInt8, shp, valuesByte, true},
-
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -906,7 +917,6 @@ func TestClient_TensorGetMeta(t *testing.T) {
 
 	keyUnexistant := "test:TensorGetMeta:Unexistant"
 
-
 	shp := []int{1, 2}
 
 	pclient.TensorSet(keyFloat32, TypeFloat32, shp, nil)
@@ -941,7 +951,6 @@ func TestClient_TensorGetMeta(t *testing.T) {
 		{keyInt32, fields{pclient.pool}, args{keyInt32}, TypeInt32, shp, false},
 		{keyInt64, fields{pclient.pool}, args{keyInt64}, TypeInt64, shp, false},
 		{keyUnexistant, fields{pclient.pool}, args{keyUnexistant}, TypeInt64, shp, true},
-
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1028,7 +1037,6 @@ func TestClient_TensorGetValues(t *testing.T) {
 		{keyUint16, fields{pclient.pool}, args{keyUint16}, TypeUint16, shp, valuesUint16, false},
 
 		{keyUnexistant, fields{pclient.pool}, args{keyUnexistant}, TypeUint16, shp, valuesUint8, true},
-
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1142,9 +1150,9 @@ func TestConnect(t *testing.T) {
 		pool *redis.Pool
 	}
 	tests := []struct {
-		name  string
-		args  args
-		wantC *Client
+		name      string
+		args      args
+		wantC     *Client
 		wantError bool
 	}{
 		//{"test:Connect:BadUrl:1", args{"badurl",nil}, nil, true },
