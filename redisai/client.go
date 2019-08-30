@@ -72,9 +72,6 @@ func (c *Client) ModelGet(name string) (data []interface{}, err error) {
 	data[0] = BackendType(data[0].(string))
 	data[1] = DeviceType(data[1].(string))
 	data[2], err = redis.Bytes(data[2], nil)
-	if err != nil {
-		return
-	}
 	return
 }
 
@@ -101,9 +98,6 @@ func (c *Client) ScriptGet(name string) (data []interface{}, err error) {
 	}
 	data[0] = DeviceType(data[0].(string))
 	data[1], err = redis.String(data[1], nil)
-	if err != nil {
-		return
-	}
 	return
 }
 
@@ -112,9 +106,6 @@ func (c *Client) ScriptDel(name string) (err error) {
 	conn := c.Pool.Get()
 	defer conn.Close()
 	_, err = redis.String(conn.Do("AI.SCRIPTDEL", args...))
-	if err != nil {
-		return err
-	}
 	return
 }
 
@@ -123,9 +114,6 @@ func (c *Client) LoadBackend(backend_identifier BackendType, location string) (e
 	conn := c.Pool.Get()
 	defer conn.Close()
 	_, err = redis.String(conn.Do("AI.CONFIG", args...))
-	if err != nil {
-		return err
-	}
 	return
 }
 
@@ -162,10 +150,7 @@ func (c *Client) ModelSet(name string, backend BackendType, device DeviceType, d
 	conn := c.Pool.Get()
 	defer conn.Close()
 	_, err = redis.String(conn.Do("AI.MODELSET", args...))
-	if err != nil {
-		return err
-	}
-	return nil
+	return
 }
 
 // ModelSetFromFile sets a RedisAI model from a file
@@ -183,10 +168,7 @@ func (c *Client) ModelRun(name string, inputs []string, outputs []string) ( err 
 	conn := c.Pool.Get()
 	defer conn.Close()
 	_, err = redis.String(conn.Do("AI.MODELRUN", args...))
-	if err != nil {
-		return err
-	}
-	return nil
+	return
 }
 
 // ScriptSet sets a RedisAI script from a blob
@@ -195,10 +177,7 @@ func (c *Client) ScriptSet(name string, device DeviceType, script_source string)
 	conn := c.Pool.Get()
 	defer conn.Close()
 	_, err = redis.String(conn.Do("AI.SCRIPTSET", args...))
-	if err != nil {
-		return err
-	}
-	return nil
+	return
 }
 
 // ScriptSetFromFile sets a RedisAI script from a file
@@ -223,10 +202,7 @@ func (c *Client) ScriptRun(name string, fn string, inputs []string, outputs []st
 	defer conn.Close()
 
 	_, err = redis.String(conn.Do("AI.SCRIPTRUN", args...))
-	if err != nil {
-		return err
-	}
-	return nil
+	return
 }
 
 // TensorSet sets a tensor
@@ -238,8 +214,5 @@ func (c *Client) TensorSet(name string, dt DataType, dims []int, data interface{
 	conn := c.Pool.Get()
 	defer conn.Close()
 	_, err = redis.String(conn.Do("AI.TENSORSET", args...))
-	if err != nil {
-		return err
-	}
-	return nil
+	return
 }

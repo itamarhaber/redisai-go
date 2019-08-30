@@ -16,22 +16,9 @@ type PipelinedClient struct {
 func (c *PipelinedClient) TensorGet(name string, ct TensorContentType) (data []interface{}, err error)  {
 	data = nil
 	args := redis.Args{}.Add(name, ct)
-
-	if c.ActiveConn == nil {
-		c.ActiveConn = c.Pool.Get()
-		defer c.ActiveConn.Close()
-	}
-	err = c.ActiveConn.Send("AI.TENSORGET", args...)
-	if err != nil {
-		return data, err
-	}
-	// incremement the pipeline
-	// flush if required
-	err = c.pipeIncr(c.ActiveConn)
-	if err != nil {
-		return data, err
-	}
-	return data, nil
+	args = args.Add(data)
+	err = c.SendAndIncr("AI.TENSORGET" , args)
+	return
 }
 
 func (c *PipelinedClient) ModelSet(name string, backend BackendType, device DeviceType, data []byte, inputs []string, outputs []string) ( err error) {
@@ -43,31 +30,14 @@ func (c *PipelinedClient) ModelSet(name string, backend BackendType, device Devi
 		args = args.Add("OUTPUTS").AddFlat(outputs)
 	}
 	args = args.Add(data)
-
-	if c.ActiveConn == nil {
-		c.ActiveConn = c.Pool.Get()
-		defer c.ActiveConn.Close()
-	}
-	err = c.ActiveConn.Send("AI.MODELSET", args...)
-	if err != nil {
-		return err
-	}
-	// incremement the pipeline
-	// flush if required
-	err = c.pipeIncr(c.ActiveConn)
-	if err != nil {
-		return err
-	}
-	return nil
+	err = c.SendAndIncr("AI.MODELSET" , args)
+	return
 }
 
 func (c *PipelinedClient) ScriptSet(name string, device DeviceType, script_source string) (err error) {
 	args := redis.Args{}.Add(name, device, script_source)
 	err = c.SendAndIncr("AI.SCRIPTSET" , args)
-	if err != nil {
-		return err
-	}
-	return nil
+	return
 }
 
 func (c *PipelinedClient) SendAndIncr( commandName string, args redis.Args) (err error) {
@@ -81,9 +51,6 @@ func (c *PipelinedClient) SendAndIncr( commandName string, args redis.Args) (err
 	// incremement the pipeline
 	// flush if required
 	err = c.pipeIncr(c.ActiveConn)
-	if err != nil {
-		return err
-	}
 	return
 }
 
@@ -96,54 +63,36 @@ func (c *PipelinedClient) ScriptRun(name string, fn string, inputs []string, out
 		args = args.Add("OUTPUTS").AddFlat(outputs)
 	}
 	err = c.SendAndIncr("AI.SCRIPTRUN" , args)
-	if err != nil {
-		return err
-	}
 	return
 }
 
 func (c *PipelinedClient) ModelGet(name string) (data []interface{}, err error) {
 	args := redis.Args{}.Add(name)
 	err = c.SendAndIncr("AI.MODELGET" , args)
-	if err != nil {
-		return data, err
-	}
 	return
 }
 
 func (c *PipelinedClient) ModelDel(name string) (err error) {
 	args := redis.Args{}.Add(name)
 	err = c.SendAndIncr("AI.MODELDEL" , args)
-	if err != nil {
-		return err
-	}
 	return
 }
 
 func (c *PipelinedClient) ScriptGet(name string) (data []interface{}, err error) {
 	args := redis.Args{}.Add(name)
 	err = c.SendAndIncr("AI.SCRIPTGET" , args)
-	if err != nil {
-		return data, err
-	}
 	return
 }
 
 func (c *PipelinedClient) ScriptDel(name string) (err error) {
 	args := redis.Args{}.Add(name)
 	err = c.SendAndIncr("AI.SCRIPTDEL" , args)
-	if err != nil {
-		return err
-	}
 	return
 }
 
 func (c *PipelinedClient) LoadBackend(backend_identifier BackendType, location string) (err error) {
 	args := redis.Args{}.Add("LOADBACKEND").Add(backend_identifier).Add(location)
 	err = c.SendAndIncr("AI.CONFIG" , args)
-	if err != nil {
-		return err
-	}
 	return
 }
 
@@ -195,9 +144,6 @@ func (c *PipelinedClient) Close() (err error) {
 func (c *PipelinedClient) ModelRun(name string, inputs []string, outputs []string) (err error) {
 	args := ModelRunArgs(name, inputs, outputs, false)
 	err = c.SendAndIncr("AI.MODELRUN" , args)
-	if err != nil {
-		return err
-	}
 	return
 }
 
@@ -205,9 +151,6 @@ func (c *PipelinedClient) ModelRun(name string, inputs []string, outputs []strin
 func (c *PipelinedClient) TensorSet(name string, dt DataType, shape []int, data interface{}) (err error) {
 	args,err := TensorSetArgs(name, dt, shape, data, false)
 	err = c.SendAndIncr("AI.TENSORSET" , args)
-	if err != nil {
-		return err
-	}
 	return
 }
 
@@ -225,9 +168,6 @@ func (c *PipelinedClient) pipeIncr(conn redis.Conn) (err error) {
 	if c.PipelinePos >= c.PipelineMaxSize {
 		err = conn.Flush()
 		c.PipelinePos = 0
-	}
-	if err != nil {
-		return err
 	}
 	return
 }
