@@ -601,6 +601,14 @@ func TestPipelinedClient_ModelSet(t *testing.T) {
 }
 
 func TestPipelinedClient_ScriptDel(t *testing.T) {
+	t1 := "test:PipelinedClient_ScriptDet:1"
+	scriptBin := ""
+	err := simpleClient.ScriptSet(t1, DeviceCPU, scriptBin)
+	if err != nil {
+		t.Errorf("Error preparing for TestPipelinedClient_ScriptDel(), while issuing ScriptSet. error = %v", err)
+		return
+	}
+
 	type fields struct {
 		Pool            *redis.Pool
 		PipelineMaxSize int
@@ -616,9 +624,13 @@ func TestPipelinedClient_ScriptDel(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
+
+		{  t1, fields{ pipelinedClient.Pool,1, pipelinedClient.PipelinePos, pipelinedClient.ActiveConn },args{ t1 }, false  },
+
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
+
 		t.Run(tt.name, func(t *testing.T) {
 			c := &PipelinedClient{
 				Pool:            tt.fields.Pool,
@@ -626,6 +638,7 @@ func TestPipelinedClient_ScriptDel(t *testing.T) {
 				PipelinePos:     tt.fields.PipelinePos,
 				ActiveConn:      tt.fields.ActiveConn,
 			}
+			c.ForceFlush()
 			if err := c.ScriptDel(tt.args.name); (err != nil) != tt.wantErr {
 				t.Errorf("ScriptDel() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -634,6 +647,14 @@ func TestPipelinedClient_ScriptDel(t *testing.T) {
 }
 
 func TestPipelinedClient_ScriptGet(t *testing.T) {
+	t1 := "test:PipelinedClient_ScriptGet:1"
+	scriptBin := ""
+	var r1 []interface{} = nil
+	err := simpleClient.ScriptSet(t1, DeviceCPU, scriptBin)
+	if err != nil {
+		t.Errorf("Error preparing for TestPipelinedClient_ScriptGet(), while issuing ScriptSet. error = %v", err)
+		return
+	}
 	type fields struct {
 		Pool            *redis.Pool
 		PipelineMaxSize int
@@ -647,11 +668,11 @@ func TestPipelinedClient_ScriptGet(t *testing.T) {
 		name     string
 		fields   fields
 		args     args
-		wantData []byte
+		wantData []interface{}
 		wantErr  bool
 	}{
-		// TODO: Add test cases.
-	}
+		{  t1, fields{ pipelinedClient.Pool,1, pipelinedClient.PipelinePos, pipelinedClient.ActiveConn },args{ t1 }, r1,false  },
+		}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &PipelinedClient{
@@ -660,6 +681,7 @@ func TestPipelinedClient_ScriptGet(t *testing.T) {
 				PipelinePos:     tt.fields.PipelinePos,
 				ActiveConn:      tt.fields.ActiveConn,
 			}
+			c.ForceFlush()
 			gotData, err := c.ScriptGet(tt.args.name)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ScriptGet() error = %v, wantErr %v", err, tt.wantErr)
@@ -673,6 +695,14 @@ func TestPipelinedClient_ScriptGet(t *testing.T) {
 }
 
 func TestPipelinedClient_ScriptRun(t *testing.T) {
+	t1 := "test:PipelinedClient_ScriptRun:1"
+	scriptBin := "def bar(a, b):\n    return a + b\n"
+	err := simpleClient.ScriptSet(t1, DeviceCPU, scriptBin)
+	if err != nil {
+		t.Errorf("Error preparing for TestPipelinedClient_ScriptRun(), while issuing ScriptSet. error = %v", err)
+		return
+	}
+
 	type fields struct {
 		Pool            *redis.Pool
 		PipelineMaxSize int
@@ -691,6 +721,8 @@ func TestPipelinedClient_ScriptRun(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
+		//{  keyModel1, fields{ pipelinedClient.Pool,1, pipelinedClient.PipelinePos, pipelinedClient.ActiveConn },args{ keyModel1, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"} }, false  },
+
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
@@ -701,6 +733,7 @@ func TestPipelinedClient_ScriptRun(t *testing.T) {
 				PipelinePos:     tt.fields.PipelinePos,
 				ActiveConn:      tt.fields.ActiveConn,
 			}
+			c.ForceFlush()
 			if err := c.ScriptRun(tt.args.name, tt.args.fn, tt.args.inputs, tt.args.outputs); (err != nil) != tt.wantErr {
 				t.Errorf("ScriptRun() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -709,6 +742,9 @@ func TestPipelinedClient_ScriptRun(t *testing.T) {
 }
 
 func TestPipelinedClient_ScriptSet(t *testing.T) {
+	t1 := "test:PipelinedClient_ScriptSet:1"
+	scriptBin := "def bar(a, b):\n    return a + b\n"
+
 	type fields struct {
 		Pool            *redis.Pool
 		PipelineMaxSize int
@@ -726,8 +762,8 @@ func TestPipelinedClient_ScriptSet(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		// TODO: Add test cases.
-	}
+		{  t1, fields{ pipelinedClient.Pool,1, pipelinedClient.PipelinePos, pipelinedClient.ActiveConn },args{ t1,  DeviceCPU, scriptBin }, false  },
+		}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &PipelinedClient{
@@ -736,6 +772,7 @@ func TestPipelinedClient_ScriptSet(t *testing.T) {
 				PipelinePos:     tt.fields.PipelinePos,
 				ActiveConn:      tt.fields.ActiveConn,
 			}
+			c.ForceFlush()
 			if err := c.ScriptSet(tt.args.name, tt.args.device, tt.args.data); (err != nil) != tt.wantErr {
 				t.Errorf("ScriptSet() error = %v, wantErr %v", err, tt.wantErr)
 			}
