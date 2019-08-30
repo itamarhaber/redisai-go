@@ -115,12 +115,6 @@ func ConnectPipelined(url string, pipelineMax int, pool *redis.Pool) (c *Pipelin
 		PipelinePos:     0,
 		ActiveConn:      nil,
 	}
-	defer func() {
-		if c.ActiveConn != nil {
-			c.ActiveConn.Flush()
-			c.ActiveConn.Close()
-		}
-	}()
 	return c
 }
 

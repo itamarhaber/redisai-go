@@ -101,6 +101,7 @@ func TestPipelinedClient_ForceFlush(t *testing.T) {
 }
 
 func TestPipelinedClient_LoadBackend(t *testing.T) {
+	t1 := "test:TestPipelinedClient_LoadBackend:1"
 	type fields struct {
 		Pool            *redis.Pool
 		PipelineMaxSize int
@@ -118,6 +119,8 @@ func TestPipelinedClient_LoadBackend(t *testing.T) {
 		wantErr bool
 	}{
 		// TODO: Add test cases.
+		{  t1, fields{ pipelinedClient.Pool,1, pipelinedClient.PipelinePos, pipelinedClient.ActiveConn },args{BackendTF, "unexistant"}, false  },
+
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -127,6 +130,7 @@ func TestPipelinedClient_LoadBackend(t *testing.T) {
 				PipelinePos:     tt.fields.PipelinePos,
 				ActiveConn:      tt.fields.ActiveConn,
 			}
+			c.ForceFlush()
 			if err := c.LoadBackend(tt.args.backendIdentifier, tt.args.location); (err != nil) != tt.wantErr {
 				t.Errorf("LoadBackend() error = %v, wantErr %v", err, tt.wantErr)
 			}
@@ -717,7 +721,6 @@ func TestPipelinedClient_ScriptRun(t *testing.T) {
 		t.Errorf("Error preparing for TestPipelinedClient_ScriptRun(), while issuing ScriptSet. error = %v", err)
 		return
 	}
-
 	type fields struct {
 		Pool            *redis.Pool
 		PipelineMaxSize int
@@ -736,10 +739,8 @@ func TestPipelinedClient_ScriptRun(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		//{  keyModel1, fields{ pipelinedClient.Pool,1, pipelinedClient.PipelinePos, pipelinedClient.ActiveConn },args{ keyModel1, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"} }, false  },
-
-		// TODO: Add test cases.
-	}
+		{  t1, fields{ pipelinedClient.Pool,1, pipelinedClient.PipelinePos, pipelinedClient.ActiveConn },args{ t1, "", []string{""}, []string{""} }, false  },
+		}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &PipelinedClient{
