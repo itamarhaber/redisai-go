@@ -8,6 +8,7 @@ import (
 )
 
 func TestModelRunArgs(t *testing.T) {
+	nameT1 := "test:ModelRunArgs:1:includeCommandName"
 	type args struct {
 		name               string
 		inputs             []string
@@ -19,7 +20,7 @@ func TestModelRunArgs(t *testing.T) {
 		args args
 		want redis.Args
 	}{
-		// TODO: Add test cases.
+		{ nameT1, args{ nameT1, []string{}, []string{}, true }, redis.Args{ "AI.MODELRUN", nameT1 } },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
