@@ -1099,11 +1099,15 @@ func TestConnect(t *testing.T) {
 		name  string
 		args  args
 		wantC *Client
+		wantError bool
 	}{
+		//{"test:Connect:BadUrl:1", args{"badurl",nil}, nil, true },
+
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
+
 			if gotC := Connect(tt.args.url, tt.args.pool); !reflect.DeepEqual(gotC, tt.wantC) {
 				t.Errorf("Connect() = %v, want %v", gotC, tt.wantC)
 			}

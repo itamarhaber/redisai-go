@@ -32,19 +32,7 @@ func (c *Client) TensorGet(name string, ct TensorContentType) (data []interface{
 
 // TensorGetValues gets a tensor's values
 func (c *Client) TensorGetValues(name string) (dt DataType, shape []int, data interface{}, err error) {
-	args := redis.Args{}.Add(name, TensorContentTypeValues)
-	conn := c.pool.Get()
-	defer conn.Close()
-
-	rep, err := conn.Do("AI.TENSORGET", args...)
-	if err != nil {
-		return
-	}
-	resp,err := processTensorReplyMeta(rep,err)
-	if err != nil {
-		return
-	}
-	resp,err = processTensorReplyValues(resp,err)
+	resp,err := c.TensorGet(name,TensorContentTypeValues)
 	if err != nil {
 		return
 	}
@@ -53,14 +41,7 @@ func (c *Client) TensorGetValues(name string) (dt DataType, shape []int, data in
 
 // TensorGetValues gets a tensor's values
 func (c *Client) TensorGetMeta(name string) (dt DataType, shape []int, err error) {
-	args := redis.Args{}.Add(name, TensorContentTypeMeta)
-	conn := c.pool.Get()
-	defer conn.Close()
-	rep, err := conn.Do("AI.TENSORGET", args...)
-	if err != nil {
-		return
-	}
-	resp,err := processTensorReplyMeta(rep,err)
+	resp,err := c.TensorGet(name,TensorContentTypeMeta)
 	if err != nil {
 		return
 	}
@@ -69,20 +50,7 @@ func (c *Client) TensorGetMeta(name string) (dt DataType, shape []int, err error
 
 // TensorGetValues gets a tensor's values
 func (c *Client) TensorGetBlob(name string) (dt DataType, shape []int, data []byte, err error) {
-	args := redis.Args{}.Add(name, TensorContentTypeBlob)
-	conn := c.pool.Get()
-	defer conn.Close()
-
-	rep, err := conn.Do("AI.TENSORGET", args...)
-	if err != nil {
-		return
-	}
-
-	resp,err := processTensorReplyMeta(rep,err)
-	if err != nil {
-		return
-	}
-	resp,err = processTensorReplyBlob(resp,err)
+	resp,err := c.TensorGet(name,TensorContentTypeBlob)
 	if err != nil {
 		return
 	}
