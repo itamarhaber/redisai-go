@@ -32,10 +32,10 @@ github.com/filipecosta90/redisai-go/redisai/client.go:98.24,100.3 1 0
 github.com/filipecosta90/redisai-go/redisai/client.go:102.20,105.3 2 0
 github.com/filipecosta90/redisai-go/redisai/client.go:107.16,109.3 1 0
 github.com/filipecosta90/redisai-go/redisai/client.go:111.16,113.3 1 0
-github.com/filipecosta90/redisai-go/redisai/client.go:117.53,122.16 5 1
+github.com/filipecosta90/redisai-go/redisai/client.go:117.53,122.16 5 2
 github.com/filipecosta90/redisai-go/redisai/client.go:125.2,125.17 1 1
 github.com/filipecosta90/redisai-go/redisai/client.go:128.2,128.8 1 1
-github.com/filipecosta90/redisai-go/redisai/client.go:122.16,124.3 1 0
+github.com/filipecosta90/redisai-go/redisai/client.go:122.16,124.3 1 1
 github.com/filipecosta90/redisai-go/redisai/client.go:125.17,127.3 1 0
 github.com/filipecosta90/redisai-go/redisai/client.go:131.91,136.16 5 0
 github.com/filipecosta90/redisai-go/redisai/client.go:139.2,139.17 1 0

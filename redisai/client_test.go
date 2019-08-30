@@ -555,6 +555,7 @@ func TestClient_ModelSetFromFile(t *testing.T) {
 
 func TestClient_ScriptDel(t *testing.T) {
 	keyScript := "test:ScriptDel:1"
+	keyScriptUnexistant := "test:ScriptDel:Unexistant:1"
 	scriptBin := "def bar(a, b):\n    return a + b\n"
 
 	err := pclient.ScriptSet(keyScript, DeviceCPU, scriptBin)
@@ -575,6 +576,7 @@ func TestClient_ScriptDel(t *testing.T) {
 		wantErr bool
 	}{
 		{keyScript, fields{pclient.pool}, args{keyScript}, false},
+		{keyScriptUnexistant, fields{pclient.pool}, args{keyScriptUnexistant}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
