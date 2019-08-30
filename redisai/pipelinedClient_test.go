@@ -5,6 +5,7 @@ import (
 	"io/ioutil"
 	"reflect"
 	"testing"
+	"time"
 )
 
 
@@ -50,6 +51,14 @@ func TestPipelineResetOnLimit(t *testing.T) {
 }
 
 func TestConnectPipelined(t *testing.T) {
+
+	urlTest1 := "redis://localhost:6379"
+	cpool1 := &redis.Pool{
+		MaxIdle:     3,
+		IdleTimeout: 240 * time.Second,
+		Dial:        func() (redis.Conn, error) { return redis.DialURL(urlTest1) },
+	}
+
 	type args struct {
 		url         string
 		pipelineMax int
@@ -58,15 +67,20 @@ func TestConnectPipelined(t *testing.T) {
 	tests := []struct {
 		name  string
 		args  args
-		wantC *PipelinedClient
+		pool *redis.Pool
+		comparePool bool
 	}{
-		// TODO: Add test cases.
+		{"test:ConnectPipelined:WithPool:1", args{urlTest1,1,cpool1}, cpool1, true },
+		{"test:ConnectPipelined:WithoutPool:1", args{urlTest1,1,nil}, nil, false },
+
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			if gotC := ConnectPipelined(tt.args.url, tt.args.pipelineMax, tt.args.pool); !reflect.DeepEqual(gotC, tt.wantC) {
-				t.Errorf("ConnectPipelined() = %v, want %v", gotC, tt.wantC)
+			gotC := ConnectPipelined(tt.args.url, tt.args.pipelineMax, tt.args.pool)
+			if tt.comparePool == true && !reflect.DeepEqual(gotC.Pool, tt.pool) {
+				t.Errorf("Connect() = %v, want %v", gotC.Pool, tt.pool)
 			}
+
 		})
 	}
 }
