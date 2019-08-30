@@ -245,14 +245,13 @@ func Float32s(reply interface{}, err error) ([]float32, error) {
 // Uint16s is a helper that converts an array command reply to a []int8.
 func Uint16s(reply interface{}, err error) ([]uint16, error) {
 	var result []uint16
-	err = sliceHelper(reply, err, "Uint16s", func(n int) { result = make([]uint16, n) }, func(i int, v interface{}) error {
-		p, ok := v.([]byte)
-		if !ok {
-			return fmt.Errorf("redisai-go: unexpected element type for Uint16s, got type %T", v)
-		}
-		result[i] = binary.LittleEndian.Uint16(p)
-		return err
-	})
+	tr , err := redis.Values( reply, err )
+	if err != nil {
+		return result, err
+	}
+	for _, num := range tr {
+		result = append( result, uint16(num.(int64)) )
+	}
 	return result, err
 }
 
@@ -272,16 +271,15 @@ func Int16s(reply interface{}, err error) ([]int16, error) {
 
 
 // Uint8s is a helper that converts an array command reply to a []int8.
-func Uint8s(reply interface{}, err error) ([]byte, error) {
-	var result []byte
-	err = sliceHelper(reply, err, "Uint8s", func(n int) { result = make([]byte, n) }, func(i int, v interface{}) error {
-		p, ok := v.([]byte)
-		if !ok {
-			return fmt.Errorf("redisai-go: unexpected element type for Uint8s, got type %T", v)
-		}
-		result[i] = p[i]
-		return err
-	})
+func Uint8s(reply interface{}, err error) ([]uint8, error) {
+	var result []uint8
+	tr , err := redis.Values( reply, err )
+	if err != nil {
+		return result, err
+	}
+	for _, num := range tr {
+		result = append( result, uint8(num.(int64)) )
+	}
 	return result, err
 }
 

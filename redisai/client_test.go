@@ -728,6 +728,7 @@ func TestClient_ScriptSetFromFile(t *testing.T) {
 }
 
 func TestClient_TensorGet(t *testing.T) {
+	valuesByteSlice := []byte{1,2,3,4,5}
 
 	valuesFloat32 := []float32{1.1}
 	valuesFloat64 := []float64{1.1}
@@ -739,6 +740,8 @@ func TestClient_TensorGet(t *testing.T) {
 
 	valuesUint8 := []uint8{1}
 	valuesUint16 := []uint16{1}
+
+	keyByteSlice := "test:TensorGet:[]byte:1"
 	keyFloat32 := "test:TensorGet:TypeFloat32:1"
 	keyFloat64 := "test:TensorGet:TypeFloat64:1"
 
@@ -750,6 +753,9 @@ func TestClient_TensorGet(t *testing.T) {
 	keyUint8 := "test:TensorGet:TypeUint8:1"
 	keyUint16 := "test:TensorGet:TypeUint16:1"
 	shp := []int{1}
+	shpByteSlice := []int{1,5}
+	pclient.TensorSet(keyByteSlice, TypeUint8, shpByteSlice, valuesByteSlice)
+
 	pclient.TensorSet(keyFloat32, TypeFloat32, shp, valuesFloat32)
 	pclient.TensorSet(keyFloat64, TypeFloat64, shp, valuesFloat64)
 
@@ -780,6 +786,8 @@ func TestClient_TensorGet(t *testing.T) {
 		compareData  bool
 		wantErr      bool
 	}{
+		{keyByteSlice, fields{pclient.pool}, args{keyByteSlice, TensorContentTypeBlob}, TypeUint8, shpByteSlice, valuesByteSlice, true, true, true, false},
+
 		{keyFloat32, fields{pclient.pool}, args{keyFloat32, TensorContentTypeValues}, TypeFloat32, shp, valuesFloat32, true, true, true, false},
 		{keyFloat64, fields{pclient.pool}, args{keyFloat64, TensorContentTypeValues}, TypeFloat64, shp, valuesFloat64, true, true, true, false},
 
@@ -787,9 +795,9 @@ func TestClient_TensorGet(t *testing.T) {
 		{keyInt16, fields{pclient.pool}, args{keyInt16, TensorContentTypeValues}, TypeInt16, shp, valuesInt16, true, true, true, false},
 		{keyInt32, fields{pclient.pool}, args{keyInt32, TensorContentTypeValues}, TypeInt32, shp, valuesInt32, true, true, true, false},
 		{keyInt64, fields{pclient.pool}, args{keyInt64, TensorContentTypeValues}, TypeInt64, shp, valuesInt64, true, true, true, false},
-		//commetting while issue is sorted out
-		//{ keyUint8, fields{ pclient.pool } , args{ keyUint8, TensorContentTypeValues }, TypeUint8,shp,valuesUint8, true, true, true, false},
-		//{ keyUint16, fields{ pclient.pool } , args{ keyUint16, TensorContentTypeValues }, TypeUint16,shp,valuesUint16, true, true, true, false},
+
+		{ keyUint8, fields{ pclient.pool } , args{ keyUint8, TensorContentTypeValues }, TypeUint8,shp,valuesUint8, true, true, true, false},
+		{ keyUint16, fields{ pclient.pool } , args{ keyUint16, TensorContentTypeValues }, TypeUint16,shp,valuesUint16, true, true, true, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
