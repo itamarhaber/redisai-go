@@ -61,7 +61,7 @@ func TestClient_LoadBackend(t *testing.T) {
 			err := c.LoadBackend(tt.args.backend_identifier, tt.args.location)
 			if tt.fields.PipelineActive {
 				c.Flush()
-				_, err = c.ActiveConn.Receive()
+				_, err = c.Receive()
 			}
 			if (err != nil) != tt.wantErr {
 				t.Errorf("LoadBackend() error = %v, wantErr %v", err, tt.wantErr)
@@ -122,7 +122,7 @@ func TestClient_ModelDel(t *testing.T) {
 			err := c.ModelDel(tt.args.name);
 			if tt.fields.PipelineActive {
 				c.Flush()
-				_, err = c.ActiveConn.Receive()
+				_, err = c.Receive()
 			}
 			if  (err != nil) != tt.wantErr {
 				t.Errorf("ModelDel() error = %v, wantErr %v", err, tt.wantErr)
@@ -1479,6 +1479,43 @@ func TestClient_Pipeline(t *testing.T) {
 				t.Errorf("PipelinePos was incorrect, got: %d, want: %d.", c.PipelinePos, 0)
 			}
 			c.Close()
+		})
+	}
+}
+
+func TestClient_Receive(t *testing.T) {
+	type fields struct {
+		Pool            *redis.Pool
+		PipelineActive  bool
+		PipelineMaxSize uint32
+		PipelinePos     uint32
+		ActiveConn      redis.Conn
+	}
+	tests := []struct {
+		name      string
+		fields    fields
+		wantReply interface{}
+		wantErr   bool
+	}{
+		// TODO: Add test cases.
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Client{
+				Pool:            tt.fields.Pool,
+				PipelineActive:  tt.fields.PipelineActive,
+				PipelineMaxSize: tt.fields.PipelineMaxSize,
+				PipelinePos:     tt.fields.PipelinePos,
+				ActiveConn:      tt.fields.ActiveConn,
+			}
+			gotReply, err := c.Receive()
+			if (err != nil) != tt.wantErr {
+				t.Errorf("Receive() error = %v, wantErr %v", err, tt.wantErr)
+				return
+			}
+			if !reflect.DeepEqual(gotReply, tt.wantReply) {
+				t.Errorf("Receive() gotReply = %v, want %v", gotReply, tt.wantReply)
+			}
 		})
 	}
 }

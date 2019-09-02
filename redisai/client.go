@@ -69,10 +69,17 @@ func (c *Client) Pipeline(PipelineMaxSize uint32) {
 }
 
 func (c *Client) Flush() (err error) {
-	err = nil
 	if c.ActiveConn != nil && c.PipelineActive {
 		atomic.StoreUint32(&c.PipelinePos, 0)
 		err = c.ActiveConn.Flush()
+	}
+	return
+}
+
+// Receive receives a single reply from the Redis server
+func (c *Client) Receive() (reply interface{}, err error) {
+	if c.ActiveConn != nil && c.PipelineActive {
+		return c.ActiveConn.Receive()
 	}
 	return
 }
