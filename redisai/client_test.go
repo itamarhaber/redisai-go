@@ -3,20 +3,34 @@ package redisai
 import (
 	"github.com/gomodule/redigo/redis"
 	"io/ioutil"
+	"os"
 	"reflect"
 	"testing"
 	"time"
 )
 
-// Global vars:
-var (
-	simpleClient = Connect("redis://localhost:6379", nil)
-)
+func createPool() *redis.Pool {
+	value, exists := os.LookupEnv("REDISAI_TEST_HOST")
+	host := "redis://localhost:6379"
+	if exists && value != "" {
+		host = value
+	}
+	cpool := &redis.Pool{
+		MaxIdle:     3,
+		IdleTimeout: 240 * time.Second,
+		Dial:        func() (redis.Conn, error) { return redis.DialURL(host) },
+	}
+	return cpool
+}
 
 func TestClient_LoadBackend(t *testing.T) {
 	keyTest1 := "test:LoadBackend:Unexistant:1"
 	type fields struct {
-		pool *redis.Pool
+		Pool            *redis.Pool
+		PipelineActive  bool
+		PipelineMaxSize uint32
+		PipelinePos     uint32
+		ActiveConn      redis.Conn
 	}
 	type args struct {
 		backend_identifier BackendType
@@ -28,14 +42,18 @@ func TestClient_LoadBackend(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyTest1, fields{simpleClient.Pool}, args{BackendTF, "unexistant"}, true},
+		{keyTest1, fields{createPool(), false, 0, 0, nil}, args{BackendTF, "unexistant"}, true},
 
 		// TODO: Add test cases.
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool: tt.fields.pool,
+				Pool:            tt.fields.Pool,
+				PipelineActive:  tt.fields.PipelineActive,
+				PipelineMaxSize: tt.fields.PipelineMaxSize,
+				PipelinePos:     tt.fields.PipelinePos,
+				ActiveConn:      tt.fields.ActiveConn,
 			}
 			if err := c.LoadBackend(tt.args.backend_identifier, tt.args.location); (err != nil) != tt.wantErr {
 				t.Errorf("LoadBackend() error = %v, wantErr %v", err, tt.wantErr)
@@ -51,13 +69,18 @@ func TestClient_ModelDel(t *testing.T) {
 		t.Errorf("Error preparing for ModelDel(), while issuing ModelSet. error = %v", err)
 		return
 	}
+	simpleClient := Connect("", createPool())
 	err = simpleClient.ModelSet(keyModel1, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"})
 	if err != nil {
 		t.Errorf("Error preparing for ModelDel(), while issuing ModelSet. error = %v", err)
 		return
 	}
 	type fields struct {
-		pool *redis.Pool
+		Pool            *redis.Pool
+		PipelineActive  bool
+		PipelineMaxSize uint32
+		PipelinePos     uint32
+		ActiveConn      redis.Conn
 	}
 	type args struct {
 		name string
@@ -68,12 +91,17 @@ func TestClient_ModelDel(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyModel1, fields{simpleClient.Pool}, args{keyModel1}, false},
+		{keyModel1, fields{createPool(), false, 0, 0, nil}, args{keyModel1}, false},
+		{keyModel1, fields{createPool(), true, 1, 0, nil}, args{keyModel1}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool: tt.fields.pool,
+				Pool:            tt.fields.Pool,
+				PipelineActive:  tt.fields.PipelineActive,
+				PipelineMaxSize: tt.fields.PipelineMaxSize,
+				PipelinePos:     tt.fields.PipelinePos,
+				ActiveConn:      tt.fields.ActiveConn,
 			}
 			if err := c.ModelDel(tt.args.name); (err != nil) != tt.wantErr {
 				t.Errorf("ModelDel() error = %v, wantErr %v", err, tt.wantErr)
@@ -90,13 +118,18 @@ func TestClient_ModelGet(t *testing.T) {
 		t.Errorf("Error preparing for ModelGet(), while issuing ModelSet. error = %v", err)
 		return
 	}
+	simpleClient := Connect("", createPool())
 	err = simpleClient.ModelSet(keyModel1, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"})
 	if err != nil {
 		t.Errorf("Error preparing for ModelGet(), while issuing ModelSet. error = %v", err)
 		return
 	}
 	type fields struct {
-		pool *redis.Pool
+		Pool            *redis.Pool
+		PipelineActive  bool
+		PipelineMaxSize uint32
+		PipelinePos     uint32
+		ActiveConn      redis.Conn
 	}
 	type args struct {
 		name string
@@ -113,32 +146,38 @@ func TestClient_ModelGet(t *testing.T) {
 		testDevice  bool
 		testData    bool
 	}{
-		{keyModelUnexistent1, fields{simpleClient.Pool}, args{keyModelUnexistent1}, BackendTF, DeviceCPU, data, true, false, false, false},
-		{keyModel1, fields{simpleClient.Pool}, args{keyModel1}, BackendTF, DeviceCPU, data, false, true, true, false},
+		{keyModelUnexistent1, fields{createPool(), false, 0, 0, nil}, args{keyModelUnexistent1}, BackendTF, DeviceCPU, data, true, false, false, false},
+		{keyModel1, fields{createPool(), false, 0, 0, nil}, args{keyModel1}, BackendTF, DeviceCPU, data, false, true, true, false},
+		{keyModel1, fields{createPool(), true, 1, 0, nil}, args{keyModel1}, BackendTF, DeviceCPU, data, false, true, true, false},
+
 		// TODO: check why is failing
-		//{ keyModel1, fields{ simpleClient.Pool } , args{ keyModel1 }, BackendTF, DeviceCPU ,data ,false,true,true,true},
+		//{ keyModel1, fields{ createPool() } , args{ keyModel1 }, BackendTF, DeviceCPU ,data ,false,true,true,true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool: tt.fields.pool,
+				Pool:            tt.fields.Pool,
+				PipelineActive:  tt.fields.PipelineActive,
+				PipelineMaxSize: tt.fields.PipelineMaxSize,
+				PipelinePos:     tt.fields.PipelinePos,
+				ActiveConn:      tt.fields.ActiveConn,
 			}
 			gotData, err := c.ModelGet(tt.args.name)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ModelGet() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if tt.testBackend {
+			if tt.testBackend && !tt.fields.PipelineActive {
 				if !reflect.DeepEqual(gotData[0], tt.wantBackend) {
 					t.Errorf("ModelGet() gotBackend = %v, want %v. gotBackend Type %v, want Type %v.", gotData[0], tt.wantBackend, reflect.TypeOf(gotData[0]), reflect.TypeOf(tt.wantBackend))
 				}
 			}
-			if tt.testDevice {
+			if tt.testDevice && !tt.fields.PipelineActive {
 				if !reflect.DeepEqual(gotData[1], tt.wantDevice) {
 					t.Errorf("ModelGet() gotDevice = %v, want %v. gotDevice Type %v, want Type %v.", gotData[1], tt.wantDevice, reflect.TypeOf(gotData[1]), reflect.TypeOf(tt.wantDevice))
 				}
 			}
-			if tt.testData {
+			if tt.testData && !tt.fields.PipelineActive {
 				if !reflect.DeepEqual(gotData[2], tt.wantData) {
 					t.Errorf("ModelGet() gotData = %v, want %v. gotData Type %v, want Type %v.", gotData[2], tt.wantData, reflect.TypeOf(gotData[2]), reflect.TypeOf(tt.wantData))
 				}
@@ -160,6 +199,7 @@ func TestClient_ModelRun(t *testing.T) {
 		t.Errorf("Error preparing for ModelRun(), while issuing ModelSet. error = %v", err)
 		return
 	}
+	simpleClient := Connect("", createPool())
 	err = simpleClient.ModelSet(keyModel1, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"})
 	if err != nil {
 		t.Errorf("Error preparing for ModelRun(), while issuing ModelSet. error = %v", err)
@@ -462,7 +502,11 @@ func TestClient_ModelRun(t *testing.T) {
 	}
 
 	type fields struct {
-		pool *redis.Pool
+		Pool            *redis.Pool
+		PipelineActive  bool
+		PipelineMaxSize uint32
+		PipelinePos     uint32
+		ActiveConn      redis.Conn
 	}
 	type args struct {
 		name    string
@@ -475,13 +519,17 @@ func TestClient_ModelRun(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyModel1, fields{simpleClient.Pool}, args{keyModel1, []string{keyTransaction1, keyReference1}, []string{keyOutput1}}, false},
-		{keyModelWrongInput1, fields{simpleClient.Pool}, args{keyModel1, []string{keyTransaction1}, []string{keyOutput1}}, true},
+		{keyModel1, fields{createPool(), false, 0, 0, nil}, args{keyModel1, []string{keyTransaction1, keyReference1}, []string{keyOutput1}}, false},
+		{keyModelWrongInput1, fields{createPool(), false, 0, 0, nil}, args{keyModel1, []string{keyTransaction1}, []string{keyOutput1}}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool: tt.fields.pool,
+				Pool:            tt.fields.Pool,
+				PipelineActive:  tt.fields.PipelineActive,
+				PipelineMaxSize: tt.fields.PipelineMaxSize,
+				PipelinePos:     tt.fields.PipelinePos,
+				ActiveConn:      tt.fields.ActiveConn,
 			}
 			if err := c.ModelRun(tt.args.name, tt.args.inputs, tt.args.outputs); (err != nil) != tt.wantErr {
 				t.Errorf("ModelRun() error = %v, wantErr %v", err, tt.wantErr)
@@ -493,7 +541,8 @@ func TestClient_ModelRun(t *testing.T) {
 func TestClient_ModelSet(t *testing.T) {
 
 	keyModelSet1 := "test:ModelSet:1"
-	keyModelSetUnexistant := "test:ModelSet:Unexistant:1"
+	keyModelSet1Pipelined := "test:ModelSet:2:Pipelined"
+	keyModelSetUnexistant := "test:ModelSet:3:Unexistant"
 	dataUnexistant := []byte{}
 	data, err := ioutil.ReadFile("./../tests/testdata/models/tensorflow/creditcardfraud.pb")
 	if err != nil {
@@ -502,7 +551,11 @@ func TestClient_ModelSet(t *testing.T) {
 	}
 
 	type fields struct {
-		pool *redis.Pool
+		Pool            *redis.Pool
+		PipelineActive  bool
+		PipelineMaxSize uint32
+		PipelinePos     uint32
+		ActiveConn      redis.Conn
 	}
 	type args struct {
 		name    string
@@ -518,13 +571,18 @@ func TestClient_ModelSet(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyModelSet1, fields{simpleClient.Pool}, args{keyModelSet1, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"}}, false},
-		{keyModelSetUnexistant, fields{simpleClient.Pool}, args{keyModelSetUnexistant, BackendTF, DeviceCPU, dataUnexistant, []string{"transaction", "reference"}, []string{"output"}}, true},
+		{keyModelSet1, fields{createPool(), false, 0, 0, nil}, args{keyModelSet1, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"}}, false},
+		{keyModelSet1Pipelined, fields{createPool(), true, 3, 0, nil}, args{keyModelSet1, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"}}, false},
+		{keyModelSetUnexistant, fields{createPool(), false, 0, 0, nil}, args{keyModelSetUnexistant, BackendTF, DeviceCPU, dataUnexistant, []string{"transaction", "reference"}, []string{"output"}}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool: tt.fields.pool,
+				Pool:            tt.fields.Pool,
+				PipelineActive:  tt.fields.PipelineActive,
+				PipelineMaxSize: tt.fields.PipelineMaxSize,
+				PipelinePos:     tt.fields.PipelinePos,
+				ActiveConn:      tt.fields.ActiveConn,
 			}
 			if err := c.ModelSet(tt.args.name, tt.args.backend, tt.args.device, tt.args.data, tt.args.inputs, tt.args.outputs); (err != nil) != tt.wantErr {
 				t.Errorf("ModelSet() error = %v, wantErr %v", err, tt.wantErr)
@@ -535,9 +593,13 @@ func TestClient_ModelSet(t *testing.T) {
 
 func TestClient_ModelSetFromFile(t *testing.T) {
 	keyModel1 := "test:ModelSetFromFile:1"
-	keyModelDontExist1 := "test:ModelSetFromFile:DontExist:1"
+	keyModelDontExist1 := "test:ModelSetFromFile:2:DontExist"
 	type fields struct {
-		pool *redis.Pool
+		Pool            *redis.Pool
+		PipelineActive  bool
+		PipelineMaxSize uint32
+		PipelinePos     uint32
+		ActiveConn      redis.Conn
 	}
 	type args struct {
 		name    string
@@ -553,13 +615,17 @@ func TestClient_ModelSetFromFile(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyModelDontExist1, fields{simpleClient.Pool}, args{keyModelDontExist1, BackendTF, DeviceCPU, "./../tests/testdata/dontexist", []string{"transaction", "reference"}, []string{"output"}}, true},
-		{keyModel1, fields{simpleClient.Pool}, args{keyModel1, BackendTF, DeviceCPU, "./../tests/testdata/models/tensorflow/creditcardfraud.pb", []string{"transaction", "reference"}, []string{"output"}}, false},
+		{keyModelDontExist1, fields{createPool(), false, 0, 0, nil}, args{keyModelDontExist1, BackendTF, DeviceCPU, "./../tests/testdata/dontexist", []string{"transaction", "reference"}, []string{"output"}}, true},
+		{keyModel1, fields{createPool(), false, 0, 0, nil}, args{keyModel1, BackendTF, DeviceCPU, "./../tests/testdata/models/tensorflow/creditcardfraud.pb", []string{"transaction", "reference"}, []string{"output"}}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool: tt.fields.pool,
+				Pool:            tt.fields.Pool,
+				PipelineActive:  tt.fields.PipelineActive,
+				PipelineMaxSize: tt.fields.PipelineMaxSize,
+				PipelinePos:     tt.fields.PipelinePos,
+				ActiveConn:      tt.fields.ActiveConn,
 			}
 			if err := c.ModelSetFromFile(tt.args.name, tt.args.backend, tt.args.device, tt.args.path, tt.args.inputs, tt.args.outputs); (err != nil) != tt.wantErr {
 				t.Errorf("ModelSetFromFile() error = %v, wantErr %v", err, tt.wantErr)
@@ -570,16 +636,21 @@ func TestClient_ModelSetFromFile(t *testing.T) {
 
 func TestClient_ScriptDel(t *testing.T) {
 	keyScript := "test:ScriptDel:1"
-	keyScriptUnexistant := "test:ScriptDel:Unexistant:1"
+	keyScriptPipelined := "test:ScriptDel:2"
+	keyScriptUnexistant := "test:ScriptDel:3:Unexistant"
 	scriptBin := "def bar(a, b):\n    return a + b\n"
-
+	simpleClient := Connect("", createPool())
 	err := simpleClient.ScriptSet(keyScript, DeviceCPU, scriptBin)
 	if err != nil {
 		t.Errorf("Error preparing for ScriptDel(), while issuing ScriptSet. error = %v", err)
 		return
 	}
 	type fields struct {
-		pool *redis.Pool
+		Pool            *redis.Pool
+		PipelineActive  bool
+		PipelineMaxSize uint32
+		PipelinePos     uint32
+		ActiveConn      redis.Conn
 	}
 	type args struct {
 		name string
@@ -590,13 +661,18 @@ func TestClient_ScriptDel(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyScript, fields{simpleClient.Pool}, args{keyScript}, false},
-		{keyScriptUnexistant, fields{simpleClient.Pool}, args{keyScriptUnexistant}, true},
+		{keyScript, fields{createPool(), false, 0, 0, nil}, args{keyScript}, false},
+		{keyScriptPipelined, fields{createPool(), true, 1, 0, nil}, args{keyScript}, false},
+		{keyScriptUnexistant, fields{createPool(), false, 0, 0, nil}, args{keyScriptUnexistant}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool: tt.fields.pool,
+				Pool:            tt.fields.Pool,
+				PipelineActive:  tt.fields.PipelineActive,
+				PipelineMaxSize: tt.fields.PipelineMaxSize,
+				PipelinePos:     tt.fields.PipelinePos,
+				ActiveConn:      tt.fields.ActiveConn,
 			}
 			if err := c.ScriptDel(tt.args.name); (err != nil) != tt.wantErr {
 				t.Errorf("ScriptDel() error = %v, wantErr %v", err, tt.wantErr)
@@ -607,43 +683,52 @@ func TestClient_ScriptDel(t *testing.T) {
 
 func TestClient_ScriptGet(t *testing.T) {
 	keyScript := "test:ScriptGet:1"
-	keyScriptEmpty := "test:ScriptGetEmpty:1"
+	keyScriptPipelined := "test:ScriptGet:2"
+	keyScriptEmpty := "test:ScriptGet:3:Empty"
 	scriptBin := ""
-
+	simpleClient := Connect("", createPool())
 	err := simpleClient.ScriptSet(keyScript, DeviceCPU, scriptBin)
 	if err != nil {
 		t.Errorf("Error preparing for ScriptGet(), while issuing ScriptSet. error = %v", err)
 		return
 	}
 	type fields struct {
-		pool *redis.Pool
+		Pool            *redis.Pool
+		PipelineActive  bool
+		PipelineMaxSize uint32
+		PipelinePos     uint32
+		ActiveConn      redis.Conn
 	}
 	type args struct {
 		name string
 	}
 	tests := []struct {
-		name     string
-		fields   fields
-		args     args
+		name           string
+		fields         fields
+		args           args
 		wantDeviceType DeviceType
-		wantData string
-		wantErr  bool
+		wantData       string
+		wantErr        bool
 	}{
-		//TODO: revise this
-		{ keyScript, fields{simpleClient.Pool} , args{keyScript }, DeviceCPU , "",false},
-		{keyScriptEmpty, fields{simpleClient.Pool}, args{keyScriptEmpty}, DeviceCPU, "",true},
+		{keyScript, fields{createPool(), false, 0, 0, nil}, args{keyScript}, DeviceCPU, "", false},
+		{keyScriptPipelined, fields{createPool(), true, 1, 0, nil}, args{keyScript}, DeviceCPU, "", false},
+		{keyScriptEmpty, fields{createPool(), false, 0, 0, nil}, args{keyScriptEmpty}, DeviceCPU, "", true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool: tt.fields.pool,
+				Pool:            tt.fields.Pool,
+				PipelineActive:  tt.fields.PipelineActive,
+				PipelineMaxSize: tt.fields.PipelineMaxSize,
+				PipelinePos:     tt.fields.PipelinePos,
+				ActiveConn:      tt.fields.ActiveConn,
 			}
 			gotData, err := c.ScriptGet(tt.args.name)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("ScriptGet() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if tt.wantErr == false {
+			if tt.wantErr == false && !tt.fields.PipelineActive {
 				if !reflect.DeepEqual(gotData[0], tt.wantDeviceType) {
 					t.Errorf("ScriptGet() gotData = %v, want %v", gotData[0], tt.wantDeviceType)
 				}
@@ -659,10 +744,10 @@ func TestClient_ScriptGet(t *testing.T) {
 func TestClient_ScriptRun(t *testing.T) {
 
 	keyScript := "test:ScriptRun:1"
-	keyScriptEmpty := "test:ScriptRunEmpty:1"
+	keyScriptEmpty := "test:ScriptRun:3:Empty"
 
 	scriptBin := "def bar(a, b):\n    return a + b\n"
-
+	simpleClient := Connect("", createPool())
 	err := simpleClient.ScriptSet(keyScript, DeviceCPU, scriptBin)
 	if err != nil {
 		t.Errorf("Error preparing for ScriptRun(), while issuing ScriptSet. error = %v", err)
@@ -670,7 +755,11 @@ func TestClient_ScriptRun(t *testing.T) {
 	}
 
 	type fields struct {
-		pool *redis.Pool
+		Pool            *redis.Pool
+		PipelineActive  bool
+		PipelineMaxSize uint32
+		PipelinePos     uint32
+		ActiveConn      redis.Conn
 	}
 	type args struct {
 		name    string
@@ -684,12 +773,16 @@ func TestClient_ScriptRun(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyScriptEmpty, fields{simpleClient.Pool}, args{keyScriptEmpty, "", []string{""}, []string{""}}, true},
+		{keyScriptEmpty, fields{createPool(), false, 0, 0, nil}, args{keyScriptEmpty, "", []string{""}, []string{""}}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool: tt.fields.pool,
+				Pool:            tt.fields.Pool,
+				PipelineActive:  tt.fields.PipelineActive,
+				PipelineMaxSize: tt.fields.PipelineMaxSize,
+				PipelinePos:     tt.fields.PipelinePos,
+				ActiveConn:      tt.fields.ActiveConn,
 			}
 			if err := c.ScriptRun(tt.args.name, tt.args.fn, tt.args.inputs, tt.args.outputs); (err != nil) != tt.wantErr {
 				t.Errorf("ScriptRun() error = %v, wantErr %v", err, tt.wantErr)
@@ -702,7 +795,11 @@ func TestClient_ScriptSet(t *testing.T) {
 	keyScriptError := "test:ScriptSet:Error:1"
 	scriptBin := "import abc"
 	type fields struct {
-		pool *redis.Pool
+		Pool            *redis.Pool
+		PipelineActive  bool
+		PipelineMaxSize uint32
+		PipelinePos     uint32
+		ActiveConn      redis.Conn
 	}
 	type args struct {
 		name   string
@@ -715,12 +812,16 @@ func TestClient_ScriptSet(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyScriptError, fields{simpleClient.Pool}, args{keyScriptError, DeviceCPU, scriptBin}, true},
+		{keyScriptError, fields{createPool(), false, 0, 0, nil}, args{keyScriptError, DeviceCPU, scriptBin}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool: tt.fields.pool,
+				Pool:            tt.fields.Pool,
+				PipelineActive:  tt.fields.PipelineActive,
+				PipelineMaxSize: tt.fields.PipelineMaxSize,
+				PipelinePos:     tt.fields.PipelinePos,
+				ActiveConn:      tt.fields.ActiveConn,
 			}
 			if err := c.ScriptSet(tt.args.name, tt.args.device, tt.args.data); (err != nil) != tt.wantErr {
 				t.Errorf("ScriptSet() error = %v, wantErr %v", err, tt.wantErr)
@@ -730,11 +831,16 @@ func TestClient_ScriptSet(t *testing.T) {
 }
 
 func TestClient_ScriptSetFromFile(t *testing.T) {
-	keyScript1 := "test:ScriptSetFromFile:DontExist:1"
+	keyScript1 := "test:ScriptSetFromFile:1:DontExist"
 	keyScript2 := "test:ScriptSetFromFile:2"
+	keyScript3Pipelined := "test:ScriptSetFromFile:3"
 
 	type fields struct {
-		pool *redis.Pool
+		Pool            *redis.Pool
+		PipelineActive  bool
+		PipelineMaxSize uint32
+		PipelinePos     uint32
+		ActiveConn      redis.Conn
 	}
 	type args struct {
 		name   string
@@ -747,13 +853,18 @@ func TestClient_ScriptSetFromFile(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyScript1, fields{simpleClient.Pool}, args{keyScript1, DeviceCPU, "./../tests/testdata/dontexist"}, true},
-		{keyScript2, fields{simpleClient.Pool}, args{keyScript2, DeviceCPU, "./../tests/testdata/script.txt"}, false},
+		{keyScript1, fields{createPool(), false, 0, 0, nil}, args{keyScript1, DeviceCPU, "./../tests/testdata/dontexist"}, true},
+		{keyScript2, fields{createPool(), false, 0, 0, nil}, args{keyScript2, DeviceCPU, "./../tests/testdata/script.txt"}, false},
+		{keyScript3Pipelined, fields{createPool(), true, 1, 0, nil}, args{keyScript3Pipelined, DeviceCPU, "./../tests/testdata/script.txt"}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool: tt.fields.pool,
+				Pool:            tt.fields.Pool,
+				PipelineActive:  tt.fields.PipelineActive,
+				PipelineMaxSize: tt.fields.PipelineMaxSize,
+				PipelinePos:     tt.fields.PipelinePos,
+				ActiveConn:      tt.fields.ActiveConn,
 			}
 			if err := c.ScriptSetFromFile(tt.args.name, tt.args.device, tt.args.path); (err != nil) != tt.wantErr {
 				t.Errorf("ScriptSetFromFile() error = %v, wantErr %v", err, tt.wantErr)
@@ -787,8 +898,11 @@ func TestClient_TensorGet(t *testing.T) {
 
 	keyUint8 := "test:TensorGet:TypeUint8:1"
 	keyUint16 := "test:TensorGet:TypeUint16:1"
+
+	keyUint8Pipelined := "test:TensorGet:TypeUint8:2:Pipelined"
 	shp := []int{1}
 	shpByteSlice := []int{1, 5}
+	simpleClient := Connect("", createPool())
 	simpleClient.TensorSet(keyByteSlice, TypeUint8, shpByteSlice, valuesByteSlice)
 
 	simpleClient.TensorSet(keyFloat32, TypeFloat32, shp, valuesFloat32)
@@ -803,7 +917,11 @@ func TestClient_TensorGet(t *testing.T) {
 	simpleClient.TensorSet(keyUint16, TypeUint16, shp, valuesUint16)
 
 	type fields struct {
-		pool *redis.Pool
+		Pool            *redis.Pool
+		PipelineActive  bool
+		PipelineMaxSize uint32
+		PipelinePos     uint32
+		ActiveConn      redis.Conn
 	}
 	type args struct {
 		name string
@@ -821,37 +939,45 @@ func TestClient_TensorGet(t *testing.T) {
 		compareData  bool
 		wantErr      bool
 	}{
-		{keyByteSlice, fields{simpleClient.Pool}, args{keyByteSlice, TensorContentTypeBlob}, TypeUint8, shpByteSlice, valuesByteSlice, true, true, true, false},
+		{keyByteSlice, fields{createPool(), false, 0, 0, nil}, args{keyByteSlice, TensorContentTypeBlob}, TypeUint8, shpByteSlice, valuesByteSlice, true, true, true, false},
 
-		{keyFloat32, fields{simpleClient.Pool}, args{keyFloat32, TensorContentTypeValues}, TypeFloat32, shp, valuesFloat32, true, true, true, false},
-		{keyFloat64, fields{simpleClient.Pool}, args{keyFloat64, TensorContentTypeValues}, TypeFloat64, shp, valuesFloat64, true, true, true, false},
+		{keyFloat32, fields{createPool(), false, 0, 0, nil}, args{keyFloat32, TensorContentTypeValues}, TypeFloat32, shp, valuesFloat32, true, true, true, false},
+		{keyFloat64, fields{createPool(), false, 0, 0, nil}, args{keyFloat64, TensorContentTypeValues}, TypeFloat64, shp, valuesFloat64, true, true, true, false},
 
-		{keyInt8, fields{simpleClient.Pool}, args{keyInt8, TensorContentTypeValues}, TypeInt8, shp, valuesInt8, true, true, true, false},
-		{keyInt16, fields{simpleClient.Pool}, args{keyInt16, TensorContentTypeValues}, TypeInt16, shp, valuesInt16, true, true, true, false},
-		{keyInt32, fields{simpleClient.Pool}, args{keyInt32, TensorContentTypeValues}, TypeInt32, shp, valuesInt32, true, true, true, false},
-		{keyInt64, fields{simpleClient.Pool}, args{keyInt64, TensorContentTypeValues}, TypeInt64, shp, valuesInt64, true, true, true, false},
+		{keyInt8, fields{createPool(), false, 0, 0, nil}, args{keyInt8, TensorContentTypeValues}, TypeInt8, shp, valuesInt8, true, true, true, false},
+		{keyInt16, fields{createPool(), false, 0, 0, nil}, args{keyInt16, TensorContentTypeValues}, TypeInt16, shp, valuesInt16, true, true, true, false},
+		{keyInt32, fields{createPool(), false, 0, 0, nil}, args{keyInt32, TensorContentTypeValues}, TypeInt32, shp, valuesInt32, true, true, true, false},
+		{keyInt64, fields{createPool(), false, 0, 0, nil}, args{keyInt64, TensorContentTypeValues}, TypeInt64, shp, valuesInt64, true, true, true, false},
 
-		{keyUint8, fields{simpleClient.Pool}, args{keyUint8, TensorContentTypeValues}, TypeUint8, shp, valuesUint8, true, true, true, false},
-		{keyUint16, fields{simpleClient.Pool}, args{keyUint16, TensorContentTypeValues}, TypeUint16, shp, valuesUint16, true, true, true, false},
+		{keyUint8, fields{createPool(), false, 0, 0, nil}, args{keyUint8, TensorContentTypeValues}, TypeUint8, shp, valuesUint8, true, true, true, false},
+		{keyUint16, fields{createPool(), false, 0, 0, nil}, args{keyUint16, TensorContentTypeValues}, TypeUint16, shp, valuesUint16, true, true, true, false},
+
+		{keyUint8Pipelined, fields{createPool(), true, 1, 0, nil}, args{keyUint8Pipelined, TensorContentTypeValues}, TypeUint8, shp, valuesUint8, true, true, true, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool: tt.fields.pool,
+				Pool:            tt.fields.Pool,
+				PipelineActive:  tt.fields.PipelineActive,
+				PipelineMaxSize: tt.fields.PipelineMaxSize,
+				PipelinePos:     tt.fields.PipelinePos,
+				ActiveConn:      tt.fields.ActiveConn,
 			}
 			gotResp, err := c.TensorGet(tt.args.name, tt.args.ct)
 			if (err != nil) != tt.wantErr {
 				t.Errorf("TensorGet() error = %v, wantErr %v", err, tt.wantErr)
 				return
 			}
-			if tt.compareDt && !reflect.DeepEqual(gotResp[0], tt.wantDt) {
-				t.Errorf("TensorGet() gotDt = %v, want %v", gotResp[0], tt.wantDt)
-			}
-			if tt.compareShape && !reflect.DeepEqual(gotResp[1], tt.wantShape) {
-				t.Errorf("TensorGet() gotShape = %v, want %v", gotResp[1], tt.wantShape)
-			}
-			if tt.compareData && !reflect.DeepEqual(gotResp[2], tt.wantData) {
-				t.Errorf("TensorGet() gotData = %v, want %v", gotResp[2], tt.wantData)
+			if !tt.fields.PipelineActive {
+				if tt.compareDt && !reflect.DeepEqual(gotResp[0], tt.wantDt) {
+					t.Errorf("TensorGet() gotDt = %v, want %v", gotResp[0], tt.wantDt)
+				}
+				if tt.compareShape && !reflect.DeepEqual(gotResp[1], tt.wantShape) {
+					t.Errorf("TensorGet() gotShape = %v, want %v", gotResp[1], tt.wantShape)
+				}
+				if tt.compareData && !reflect.DeepEqual(gotResp[2], tt.wantData) {
+					t.Errorf("TensorGet() gotData = %v, want %v", gotResp[2], tt.wantData)
+				}
 			}
 		})
 	}
@@ -863,10 +989,15 @@ func TestClient_TensorGetBlob(t *testing.T) {
 	keyUnexistant := "test:TensorGetMeta:Unexistant"
 
 	shp := []int{1, 4}
+	simpleClient := Connect("", createPool())
 	simpleClient.TensorSet(keyByte, TypeInt8, shp, valuesByte)
 
 	type fields struct {
-		pool *redis.Pool
+		Pool            *redis.Pool
+		PipelineActive  bool
+		PipelineMaxSize uint32
+		PipelinePos     uint32
+		ActiveConn      redis.Conn
 	}
 	type args struct {
 		name string
@@ -880,13 +1011,17 @@ func TestClient_TensorGetBlob(t *testing.T) {
 		wantData  []byte
 		wantErr   bool
 	}{
-		{keyByte, fields{simpleClient.Pool}, args{keyByte}, TypeInt8, shp, valuesByte, false},
-		{keyUnexistant, fields{simpleClient.Pool}, args{keyUnexistant}, TypeInt8, shp, valuesByte, true},
+		{keyByte, fields{createPool(), false, 0, 0, nil}, args{keyByte}, TypeInt8, shp, valuesByte, false},
+		{keyUnexistant, fields{createPool(), false, 0, 0, nil}, args{keyUnexistant}, TypeInt8, shp, valuesByte, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool: tt.fields.pool,
+				Pool:            tt.fields.Pool,
+				PipelineActive:  tt.fields.PipelineActive,
+				PipelineMaxSize: tt.fields.PipelineMaxSize,
+				PipelinePos:     tt.fields.PipelinePos,
+				ActiveConn:      tt.fields.ActiveConn,
 			}
 			gotDt, gotShape, gotData, err := c.TensorGetBlob(tt.args.name)
 			if (err != nil) != tt.wantErr {
@@ -925,7 +1060,7 @@ func TestClient_TensorGetMeta(t *testing.T) {
 	keyUnexistant := "test:TensorGetMeta:Unexistant"
 
 	shp := []int{1, 2}
-
+	simpleClient := Connect("", createPool())
 	simpleClient.TensorSet(keyFloat32, TypeFloat32, shp, nil)
 	simpleClient.TensorSet(keyFloat64, TypeFloat64, shp, nil)
 
@@ -938,7 +1073,11 @@ func TestClient_TensorGetMeta(t *testing.T) {
 	simpleClient.TensorSet(keyUint16, TypeUint16, shp, nil)
 
 	type fields struct {
-		pool *redis.Pool
+		Pool            *redis.Pool
+		PipelineActive  bool
+		PipelineMaxSize uint32
+		PipelinePos     uint32
+		ActiveConn      redis.Conn
 	}
 	type args struct {
 		name string
@@ -951,18 +1090,22 @@ func TestClient_TensorGetMeta(t *testing.T) {
 		wantShape []int
 		wantErr   bool
 	}{
-		{keyFloat32, fields{simpleClient.Pool}, args{keyFloat32}, TypeFloat32, shp, false},
-		{keyFloat64, fields{simpleClient.Pool}, args{keyFloat64}, TypeFloat64, shp, false},
-		{keyInt8, fields{simpleClient.Pool}, args{keyInt8}, TypeInt8, shp, false},
-		{keyInt16, fields{simpleClient.Pool}, args{keyInt16}, TypeInt16, shp, false},
-		{keyInt32, fields{simpleClient.Pool}, args{keyInt32}, TypeInt32, shp, false},
-		{keyInt64, fields{simpleClient.Pool}, args{keyInt64}, TypeInt64, shp, false},
-		{keyUnexistant, fields{simpleClient.Pool}, args{keyUnexistant}, TypeInt64, shp, true},
+		{keyFloat32, fields{createPool(), false, 0, 0, nil}, args{keyFloat32}, TypeFloat32, shp, false},
+		{keyFloat64, fields{createPool(), false, 0, 0, nil}, args{keyFloat64}, TypeFloat64, shp, false},
+		{keyInt8, fields{createPool(), false, 0, 0, nil}, args{keyInt8}, TypeInt8, shp, false},
+		{keyInt16, fields{createPool(), false, 0, 0, nil}, args{keyInt16}, TypeInt16, shp, false},
+		{keyInt32, fields{createPool(), false, 0, 0, nil}, args{keyInt32}, TypeInt32, shp, false},
+		{keyInt64, fields{createPool(), false, 0, 0, nil}, args{keyInt64}, TypeInt64, shp, false},
+		{keyUnexistant, fields{createPool(), false, 0, 0, nil}, args{keyUnexistant}, TypeInt64, shp, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool: tt.fields.pool,
+				Pool:            tt.fields.Pool,
+				PipelineActive:  tt.fields.PipelineActive,
+				PipelineMaxSize: tt.fields.PipelineMaxSize,
+				PipelinePos:     tt.fields.PipelinePos,
+				ActiveConn:      tt.fields.ActiveConn,
 			}
 			gotDt, gotShape, err := c.TensorGetMeta(tt.args.name)
 			if (err != nil) != tt.wantErr {
@@ -1006,6 +1149,7 @@ func TestClient_TensorGetValues(t *testing.T) {
 	keyUnexistant := "test:TensorGetValues:Unexistant"
 
 	shp := []int{1}
+	simpleClient := Connect("", createPool())
 	simpleClient.TensorSet(keyFloat32, TypeFloat32, shp, valuesFloat32)
 	simpleClient.TensorSet(keyFloat64, TypeFloat64, shp, valuesFloat64)
 
@@ -1018,7 +1162,11 @@ func TestClient_TensorGetValues(t *testing.T) {
 	simpleClient.TensorSet(keyUint16, TypeUint16, shp, valuesUint16)
 
 	type fields struct {
-		pool *redis.Pool
+		Pool            *redis.Pool
+		PipelineActive  bool
+		PipelineMaxSize uint32
+		PipelinePos     uint32
+		ActiveConn      redis.Conn
 	}
 	type args struct {
 		name string
@@ -1032,23 +1180,27 @@ func TestClient_TensorGetValues(t *testing.T) {
 		wantData  interface{}
 		wantErr   bool
 	}{
-		{keyFloat32, fields{simpleClient.Pool}, args{keyFloat32}, TypeFloat32, shp, valuesFloat32, false},
-		{keyFloat64, fields{simpleClient.Pool}, args{keyFloat64}, TypeFloat64, shp, valuesFloat64, false},
+		{keyFloat32, fields{createPool(), false, 0, 0, nil}, args{keyFloat32}, TypeFloat32, shp, valuesFloat32, false},
+		{keyFloat64, fields{createPool(), false, 0, 0, nil}, args{keyFloat64}, TypeFloat64, shp, valuesFloat64, false},
 
-		{keyInt8, fields{simpleClient.Pool}, args{keyInt8}, TypeInt8, shp, valuesInt8, false},
-		{keyInt16, fields{simpleClient.Pool}, args{keyInt16}, TypeInt16, shp, valuesInt16, false},
-		{keyInt32, fields{simpleClient.Pool}, args{keyInt32}, TypeInt32, shp, valuesInt32, false},
-		{keyInt64, fields{simpleClient.Pool}, args{keyInt64}, TypeInt64, shp, valuesInt64, false},
+		{keyInt8, fields{createPool(), false, 0, 0, nil}, args{keyInt8}, TypeInt8, shp, valuesInt8, false},
+		{keyInt16, fields{createPool(), false, 0, 0, nil}, args{keyInt16}, TypeInt16, shp, valuesInt16, false},
+		{keyInt32, fields{createPool(), false, 0, 0, nil}, args{keyInt32}, TypeInt32, shp, valuesInt32, false},
+		{keyInt64, fields{createPool(), false, 0, 0, nil}, args{keyInt64}, TypeInt64, shp, valuesInt64, false},
 
-		{keyUint8, fields{simpleClient.Pool}, args{keyUint8}, TypeUint8, shp, valuesUint8, false},
-		{keyUint16, fields{simpleClient.Pool}, args{keyUint16}, TypeUint16, shp, valuesUint16, false},
+		{keyUint8, fields{createPool(), false, 0, 0, nil}, args{keyUint8}, TypeUint8, shp, valuesUint8, false},
+		{keyUint16, fields{createPool(), false, 0, 0, nil}, args{keyUint16}, TypeUint16, shp, valuesUint16, false},
 
-		{keyUnexistant, fields{simpleClient.Pool}, args{keyUnexistant}, TypeUint16, shp, valuesUint8, true},
+		{keyUnexistant, fields{createPool(), false, 0, 0, nil}, args{keyUnexistant}, TypeUint16, shp, valuesUint8, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool: tt.fields.pool,
+				Pool:            tt.fields.Pool,
+				PipelineActive:  tt.fields.PipelineActive,
+				PipelineMaxSize: tt.fields.PipelineMaxSize,
+				PipelinePos:     tt.fields.PipelinePos,
+				ActiveConn:      tt.fields.ActiveConn,
 			}
 			gotDt, gotShape, gotData, err := c.TensorGetValues(tt.args.name)
 			if (err != nil) != tt.wantErr {
@@ -1102,11 +1254,18 @@ func TestClient_TensorSet(t *testing.T) {
 	keyUint64 := "test:TensorSet:TypeUint64:ExpectError:1"
 
 	keyInt8Meta := "test:TensorSet:TypeInt8:Meta:1"
+	keyInt8MetaPipelined := "test:TensorSet:TypeInt8:Meta:2:Pipelined"
+
+	keyError1 := "test:TestClient_TensorSet:1:FaultyDims"
 
 	shp := []int{1}
 
 	type fields struct {
-		pool *redis.Pool
+		Pool            *redis.Pool
+		PipelineActive  bool
+		PipelineMaxSize uint32
+		PipelinePos     uint32
+		ActiveConn      redis.Conn
 	}
 	type args struct {
 		name string
@@ -1121,28 +1280,34 @@ func TestClient_TensorSet(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyFloat32, fields{simpleClient.Pool}, args{keyFloat32, TypeFloat, shp, valuesFloat32}, false},
-		{keyFloat64, fields{simpleClient.Pool}, args{keyFloat64, TypeFloat64, shp, valuesFloat64}, false},
+		{keyFloat32, fields{createPool(), false, 0, 0, nil}, args{keyFloat32, TypeFloat, shp, valuesFloat32}, false},
+		{keyFloat64, fields{createPool(), false, 0, 0, nil}, args{keyFloat64, TypeFloat64, shp, valuesFloat64}, false},
 
-		{keyInt8, fields{simpleClient.Pool}, args{keyInt8, TypeInt8, shp, valuesInt8}, false},
-		{keyInt16, fields{simpleClient.Pool}, args{keyInt16, TypeInt16, shp, valuesInt16}, false},
-		{keyInt32, fields{simpleClient.Pool}, args{keyInt32, TypeInt32, shp, valuesInt32}, false},
-		{keyInt64, fields{simpleClient.Pool}, args{keyInt64, TypeInt64, shp, valuesInt64}, false},
+		{keyInt8, fields{createPool(), false, 0, 0, nil}, args{keyInt8, TypeInt8, shp, valuesInt8}, false},
+		{keyInt16, fields{createPool(), false, 0, 0, nil}, args{keyInt16, TypeInt16, shp, valuesInt16}, false},
+		{keyInt32, fields{createPool(), false, 0, 0, nil}, args{keyInt32, TypeInt32, shp, valuesInt32}, false},
+		{keyInt64, fields{createPool(), false, 0, 0, nil}, args{keyInt64, TypeInt64, shp, valuesInt64}, false},
 
-		{keyUint8, fields{simpleClient.Pool}, args{keyUint8, TypeUint8, shp, valuesUint8}, false},
-		{keyUint16, fields{simpleClient.Pool}, args{keyUint16, TypeUint16, shp, valuesUint16}, false},
-		{keyUint32, fields{simpleClient.Pool}, args{keyUint32, TypeUint8, shp, valuesUint32}, true},
-		{keyUint64, fields{simpleClient.Pool}, args{keyUint64, TypeUint8, shp, valuesUint64}, true},
+		{keyUint8, fields{createPool(), false, 0, 0, nil}, args{keyUint8, TypeUint8, shp, valuesUint8}, false},
+		{keyUint16, fields{createPool(), false, 0, 0, nil}, args{keyUint16, TypeUint16, shp, valuesUint16}, false},
+		{keyUint32, fields{createPool(), false, 0, 0, nil}, args{keyUint32, TypeUint8, shp, valuesUint32}, true},
+		{keyUint64, fields{createPool(), false, 0, 0, nil}, args{keyUint64, TypeUint8, shp, valuesUint64}, true},
 
-		{keyInt8Meta, fields{simpleClient.Pool}, args{keyInt8Meta, TypeUint8, shp, nil}, false},
-		{keyByte, fields{simpleClient.Pool}, args{keyByte, TypeUint8, shp, valuesByte}, false},
+		{keyInt8Meta, fields{createPool(), false, 0, 0, nil}, args{keyInt8Meta, TypeUint8, shp, nil}, false},
+		{keyInt8MetaPipelined, fields{createPool(), true, 1, 0, nil}, args{keyInt8MetaPipelined, TypeUint8, shp, nil}, false},
 
-		{"test:TestClient_TensorSet:1:FaultyDims", fields{simpleClient.Pool}, args{"test:TestClient_TensorSet:1:FaultyDims", TypeFloat, []int{1, 10}, []float32{1}}, true},
+		{keyByte, fields{createPool(), false, 0, 0, nil}, args{keyByte, TypeUint8, shp, valuesByte}, false},
+
+		{keyError1, fields{createPool(), false, 0, 0, nil}, args{keyError1, TypeFloat, []int{1, 10}, []float32{1}}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool: tt.fields.pool,
+				Pool:            tt.fields.Pool,
+				PipelineActive:  tt.fields.PipelineActive,
+				PipelineMaxSize: tt.fields.PipelineMaxSize,
+				PipelinePos:     tt.fields.PipelinePos,
+				ActiveConn:      tt.fields.ActiveConn,
 			}
 			if err := c.TensorSet(tt.args.name, tt.args.dt, tt.args.dims, tt.args.data); (err != nil) != tt.wantErr {
 				t.Errorf("TensorSet() error = %v, wantErr %v", err, tt.wantErr)
@@ -1160,23 +1325,26 @@ func TestConnect(t *testing.T) {
 	}
 
 	type args struct {
-		url  string
-		pool *redis.Pool
+		url             string
+		Pool            *redis.Pool
+		PipelineActive  bool
+		PipelineMaxSize uint32
+		PipelinePos     uint32
+		ActiveConn      redis.Conn
 	}
 	tests := []struct {
-		name      string
-		args      args
-		pool *redis.Pool
+		name        string
+		args        args
+		pool        *redis.Pool
 		comparePool bool
 	}{
-		{"test:Connect:WithPool:1", args{urlTest1,cpool1}, cpool1, true },
-		{"test:Connect:WithoutPool:1", args{urlTest1,nil}, nil, false },
-
+		{"test:Connect:WithPool:1", args{urlTest1, nil, false, 0, 0, nil}, cpool1, false},
+		//{"test:Connect:WithoutPool:1", args{urlTest1,false, 0,0, nil}, nil, false },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 
-			gotC := Connect(tt.args.url, tt.args.pool)
+			gotC := Connect(tt.args.url, tt.args.Pool)
 			if tt.comparePool == true && !reflect.DeepEqual(gotC.Pool, tt.pool) {
 				t.Errorf("Connect() = %v, want %v", gotC.Pool, tt.pool)
 			}

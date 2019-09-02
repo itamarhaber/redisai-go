@@ -18,17 +18,18 @@ go get github.com/filipecosta90/redisai-go/redisai
 # Usage Example
 
 ```go
+package main
 
 import (
-	"fmt"
-	"log"
-	"github.com/filipecosta90/redisai-go/redisai"
+    "fmt"
+    "github.com/filipecosta90/redisai-go/redisai"
+    "log"
 )
 
 func ExampleClient() {
 
 	// Create a client. 
-	client := redisai.Connect("localhost:6379", nil )
+	client := redisai.Connect("redis://localhost:6379", nil )
 
 	// Set a tensor
 	// AI.TENSORSET foo FLOAT 2 2 VALUES 1 2 3 4
