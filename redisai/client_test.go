@@ -1427,7 +1427,7 @@ func TestClient_Pipeline(t *testing.T) {
 				if err != nil {
 					t.Errorf("while working on TestClient_Pipeline, TensorGet() returned error = %v", err)
 				}
-				if oldPos + 1 != c.PipelinePos {
+				if oldPos + 1 != c.PipelinePos && c.PipelinePos != 0 {
 					t.Errorf("PipelinePos was incorrect, got: %d, want: %d.", c.PipelinePos, oldPos + 1)
 				}
 			}
