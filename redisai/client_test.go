@@ -72,6 +72,8 @@ func TestClient_LoadBackend(t *testing.T) {
 
 func TestClient_ModelDel(t *testing.T) {
 	keyModel1 := "test:ModelDel:1"
+	keyModel2 := "test:ModelDel:2:Pipelined"
+
 	data, err := ioutil.ReadFile("./../tests/testdata/models/tensorflow/creditcardfraud.pb")
 	if err != nil {
 		t.Errorf("Error preparing for ModelDel(), while issuing ModelSet. error = %v", err)
@@ -83,6 +85,12 @@ func TestClient_ModelDel(t *testing.T) {
 		t.Errorf("Error preparing for ModelDel(), while issuing ModelSet. error = %v", err)
 		return
 	}
+	err = simpleClient.ModelSet(keyModel2, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"})
+	if err != nil {
+		t.Errorf("Error preparing for ModelDel(), while issuing ModelSet. error = %v", err)
+		return
+	}
+
 	type fields struct {
 		Pool            *redis.Pool
 		PipelineActive  bool
@@ -100,7 +108,7 @@ func TestClient_ModelDel(t *testing.T) {
 		wantErr bool
 	}{
 		{keyModel1, fields{createPool(), false, 0, 0, nil}, args{keyModel1}, false},
-		{keyModel1, fields{createPool(), true, 1, 0, nil}, args{keyModel1}, false},
+		{keyModel2, fields{createPool(), true, 1, 0, nil}, args{keyModel2}, false},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -111,7 +119,12 @@ func TestClient_ModelDel(t *testing.T) {
 				PipelinePos:     tt.fields.PipelinePos,
 				ActiveConn:      tt.fields.ActiveConn,
 			}
-			if err := c.ModelDel(tt.args.name); (err != nil) != tt.wantErr {
+			err := c.ModelDel(tt.args.name);
+			if tt.fields.PipelineActive {
+				c.Flush()
+				_, err = c.ActiveConn.Receive()
+			}
+			if  (err != nil) != tt.wantErr {
 				t.Errorf("ModelDel() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
