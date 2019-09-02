@@ -10,11 +10,11 @@ import (
 
 // Client is a RedisAI client
 type Client struct {
-	Pool            *redis.Pool
-	PipelineActive  bool
-	PipelineMaxSize uint32
-	PipelinePos     uint32
-	ActiveConn      redis.Conn
+	Pool                  *redis.Pool
+	PipelineActive        bool
+	PipelineAutoFlushSize uint32
+	PipelinePos           uint32
+	ActiveConn            redis.Conn
 }
 
 // Connect intializes a Client
@@ -31,11 +31,11 @@ func Connect(url string, pool *redis.Pool) (c *Client) {
 	}
 
 	c = &Client{
-		Pool:            cpool,
-		PipelineActive:  false,
-		PipelineMaxSize: 0,
-		PipelinePos:     0,
-		ActiveConn:      nil,
+		Pool:                  cpool,
+		PipelineActive:        false,
+		PipelineAutoFlushSize: 0,
+		PipelinePos:           0,
+		ActiveConn:            nil,
 	}
 
 	return c
@@ -62,10 +62,10 @@ func (c *Client) ActiveConnNX() {
 	}
 }
 
-func (c *Client) Pipeline(PipelineMaxSize uint32) {
+func (c *Client) Pipeline(PipelineAutoFlushAtSize uint32) {
 	c.PipelineActive = true
 	c.PipelinePos = 0
-	c.PipelineMaxSize = PipelineMaxSize
+	c.PipelineAutoFlushSize = PipelineAutoFlushAtSize
 }
 
 func (c *Client) DisablePipeline() (err error) {
@@ -104,7 +104,7 @@ func (c *Client) SendAndIncr(commandName string, args redis.Args) (err error) {
 
 func (c *Client) pipeIncr(conn redis.Conn) (err error) {
 	atomic.AddUint32(&c.PipelinePos, 1)
-	if c.PipelinePos >= c.PipelineMaxSize {
+	if c.PipelinePos >= c.PipelineAutoFlushSize && c.PipelineAutoFlushSize != 0 {
 		err = conn.Flush()
 		atomic.StoreUint32(&c.PipelinePos, 0)
 	}
@@ -119,11 +119,13 @@ func (c *Client) TensorGet(name string, ct TensorContentType) (data []interface{
 	} else {
 		resp, err := c.ActiveConn.Do("AI.TENSORGET", args...)
 		data, err = processTensorReplyMeta(resp, err)
-		if ct == TensorContentTypeBlob {
+		switch ct {
+		case TensorContentTypeBlob:
 			data, err = processTensorReplyBlob(data, err)
-		}
-		if ct == TensorContentTypeValues {
+		case TensorContentTypeValues:
 			data, err = processTensorReplyValues(data, err)
+		default:
+			err = fmt.Errorf("redisai.TensorGet: Unrecognized TensorContentType. Expected '%s' or '%s', got '%s'", TensorContentTypeBlob,TensorContentTypeValues, ct)
 		}
 	}
 	return

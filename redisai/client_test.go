@@ -52,11 +52,11 @@ func TestClient_LoadBackend(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool:            tt.fields.Pool,
-				PipelineActive:  tt.fields.PipelineActive,
-				PipelineMaxSize: tt.fields.PipelineMaxSize,
-				PipelinePos:     tt.fields.PipelinePos,
-				ActiveConn:      tt.fields.ActiveConn,
+				Pool:                  tt.fields.Pool,
+				PipelineActive:        tt.fields.PipelineActive,
+				PipelineAutoFlushSize: tt.fields.PipelineMaxSize,
+				PipelinePos:           tt.fields.PipelinePos,
+				ActiveConn:            tt.fields.ActiveConn,
 			}
 			err := c.LoadBackend(tt.args.backend_identifier, tt.args.location)
 			if tt.fields.PipelineActive {
@@ -113,11 +113,11 @@ func TestClient_ModelDel(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool:            tt.fields.Pool,
-				PipelineActive:  tt.fields.PipelineActive,
-				PipelineMaxSize: tt.fields.PipelineMaxSize,
-				PipelinePos:     tt.fields.PipelinePos,
-				ActiveConn:      tt.fields.ActiveConn,
+				Pool:                  tt.fields.Pool,
+				PipelineActive:        tt.fields.PipelineActive,
+				PipelineAutoFlushSize: tt.fields.PipelineMaxSize,
+				PipelinePos:           tt.fields.PipelinePos,
+				ActiveConn:            tt.fields.ActiveConn,
 			}
 			err := c.ModelDel(tt.args.name)
 			if tt.fields.PipelineActive {
@@ -177,11 +177,11 @@ func TestClient_ModelGet(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool:            tt.fields.Pool,
-				PipelineActive:  tt.fields.PipelineActive,
-				PipelineMaxSize: tt.fields.PipelineMaxSize,
-				PipelinePos:     tt.fields.PipelinePos,
-				ActiveConn:      tt.fields.ActiveConn,
+				Pool:                  tt.fields.Pool,
+				PipelineActive:        tt.fields.PipelineActive,
+				PipelineAutoFlushSize: tt.fields.PipelineMaxSize,
+				PipelinePos:           tt.fields.PipelinePos,
+				ActiveConn:            tt.fields.ActiveConn,
 			}
 			gotData, err := c.ModelGet(tt.args.name)
 			if (err != nil) != tt.wantErr {
@@ -550,11 +550,11 @@ func TestClient_ModelRun(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool:            tt.fields.Pool,
-				PipelineActive:  tt.fields.PipelineActive,
-				PipelineMaxSize: tt.fields.PipelineMaxSize,
-				PipelinePos:     tt.fields.PipelinePos,
-				ActiveConn:      tt.fields.ActiveConn,
+				Pool:                  tt.fields.Pool,
+				PipelineActive:        tt.fields.PipelineActive,
+				PipelineAutoFlushSize: tt.fields.PipelineMaxSize,
+				PipelinePos:           tt.fields.PipelinePos,
+				ActiveConn:            tt.fields.ActiveConn,
 			}
 			if err := c.ModelRun(tt.args.name, tt.args.inputs, tt.args.outputs); (err != nil) != tt.wantErr {
 				t.Errorf("ModelRun() error = %v, wantErr %v", err, tt.wantErr)
@@ -603,11 +603,11 @@ func TestClient_ModelSet(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool:            tt.fields.Pool,
-				PipelineActive:  tt.fields.PipelineActive,
-				PipelineMaxSize: tt.fields.PipelineMaxSize,
-				PipelinePos:     tt.fields.PipelinePos,
-				ActiveConn:      tt.fields.ActiveConn,
+				Pool:                  tt.fields.Pool,
+				PipelineActive:        tt.fields.PipelineActive,
+				PipelineAutoFlushSize: tt.fields.PipelineMaxSize,
+				PipelinePos:           tt.fields.PipelinePos,
+				ActiveConn:            tt.fields.ActiveConn,
 			}
 			if err := c.ModelSet(tt.args.name, tt.args.backend, tt.args.device, tt.args.data, tt.args.inputs, tt.args.outputs); (err != nil) != tt.wantErr {
 				t.Errorf("ModelSet() error = %v, wantErr %v", err, tt.wantErr)
@@ -646,11 +646,11 @@ func TestClient_ModelSetFromFile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool:            tt.fields.Pool,
-				PipelineActive:  tt.fields.PipelineActive,
-				PipelineMaxSize: tt.fields.PipelineMaxSize,
-				PipelinePos:     tt.fields.PipelinePos,
-				ActiveConn:      tt.fields.ActiveConn,
+				Pool:                  tt.fields.Pool,
+				PipelineActive:        tt.fields.PipelineActive,
+				PipelineAutoFlushSize: tt.fields.PipelineMaxSize,
+				PipelinePos:           tt.fields.PipelinePos,
+				ActiveConn:            tt.fields.ActiveConn,
 			}
 			if err := c.ModelSetFromFile(tt.args.name, tt.args.backend, tt.args.device, tt.args.path, tt.args.inputs, tt.args.outputs); (err != nil) != tt.wantErr {
 				t.Errorf("ModelSetFromFile() error = %v, wantErr %v", err, tt.wantErr)
@@ -693,11 +693,11 @@ func TestClient_ScriptDel(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool:            tt.fields.Pool,
-				PipelineActive:  tt.fields.PipelineActive,
-				PipelineMaxSize: tt.fields.PipelineMaxSize,
-				PipelinePos:     tt.fields.PipelinePos,
-				ActiveConn:      tt.fields.ActiveConn,
+				Pool:                  tt.fields.Pool,
+				PipelineActive:        tt.fields.PipelineActive,
+				PipelineAutoFlushSize: tt.fields.PipelineMaxSize,
+				PipelinePos:           tt.fields.PipelinePos,
+				ActiveConn:            tt.fields.ActiveConn,
 			}
 			if err := c.ScriptDel(tt.args.name); (err != nil) != tt.wantErr {
 				t.Errorf("ScriptDel() error = %v, wantErr %v", err, tt.wantErr)
@@ -742,11 +742,11 @@ func TestClient_ScriptGet(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool:            tt.fields.Pool,
-				PipelineActive:  tt.fields.PipelineActive,
-				PipelineMaxSize: tt.fields.PipelineMaxSize,
-				PipelinePos:     tt.fields.PipelinePos,
-				ActiveConn:      tt.fields.ActiveConn,
+				Pool:                  tt.fields.Pool,
+				PipelineActive:        tt.fields.PipelineActive,
+				PipelineAutoFlushSize: tt.fields.PipelineMaxSize,
+				PipelinePos:           tt.fields.PipelinePos,
+				ActiveConn:            tt.fields.ActiveConn,
 			}
 			gotData, err := c.ScriptGet(tt.args.name)
 			if (err != nil) != tt.wantErr {
@@ -808,11 +808,11 @@ func TestClient_ScriptRun(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool:            tt.fields.Pool,
-				PipelineActive:  tt.fields.PipelineActive,
-				PipelineMaxSize: tt.fields.PipelineMaxSize,
-				PipelinePos:     tt.fields.PipelinePos,
-				ActiveConn:      tt.fields.ActiveConn,
+				Pool:                  tt.fields.Pool,
+				PipelineActive:        tt.fields.PipelineActive,
+				PipelineAutoFlushSize: tt.fields.PipelineMaxSize,
+				PipelinePos:           tt.fields.PipelinePos,
+				ActiveConn:            tt.fields.ActiveConn,
 			}
 			if err := c.ScriptRun(tt.args.name, tt.args.fn, tt.args.inputs, tt.args.outputs); (err != nil) != tt.wantErr {
 				t.Errorf("ScriptRun() error = %v, wantErr %v", err, tt.wantErr)
@@ -847,11 +847,11 @@ func TestClient_ScriptSet(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool:            tt.fields.Pool,
-				PipelineActive:  tt.fields.PipelineActive,
-				PipelineMaxSize: tt.fields.PipelineMaxSize,
-				PipelinePos:     tt.fields.PipelinePos,
-				ActiveConn:      tt.fields.ActiveConn,
+				Pool:                  tt.fields.Pool,
+				PipelineActive:        tt.fields.PipelineActive,
+				PipelineAutoFlushSize: tt.fields.PipelineMaxSize,
+				PipelinePos:           tt.fields.PipelinePos,
+				ActiveConn:            tt.fields.ActiveConn,
 			}
 			if err := c.ScriptSet(tt.args.name, tt.args.device, tt.args.data); (err != nil) != tt.wantErr {
 				t.Errorf("ScriptSet() error = %v, wantErr %v", err, tt.wantErr)
@@ -890,11 +890,11 @@ func TestClient_ScriptSetFromFile(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool:            tt.fields.Pool,
-				PipelineActive:  tt.fields.PipelineActive,
-				PipelineMaxSize: tt.fields.PipelineMaxSize,
-				PipelinePos:     tt.fields.PipelinePos,
-				ActiveConn:      tt.fields.ActiveConn,
+				Pool:                  tt.fields.Pool,
+				PipelineActive:        tt.fields.PipelineActive,
+				PipelineAutoFlushSize: tt.fields.PipelineMaxSize,
+				PipelinePos:           tt.fields.PipelinePos,
+				ActiveConn:            tt.fields.ActiveConn,
 			}
 			if err := c.ScriptSetFromFile(tt.args.name, tt.args.device, tt.args.path); (err != nil) != tt.wantErr {
 				t.Errorf("ScriptSetFromFile() error = %v, wantErr %v", err, tt.wantErr)
@@ -987,11 +987,11 @@ func TestClient_TensorGet(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool:            tt.fields.Pool,
-				PipelineActive:  tt.fields.PipelineActive,
-				PipelineMaxSize: tt.fields.PipelineMaxSize,
-				PipelinePos:     tt.fields.PipelinePos,
-				ActiveConn:      tt.fields.ActiveConn,
+				Pool:                  tt.fields.Pool,
+				PipelineActive:        tt.fields.PipelineActive,
+				PipelineAutoFlushSize: tt.fields.PipelineMaxSize,
+				PipelinePos:           tt.fields.PipelinePos,
+				ActiveConn:            tt.fields.ActiveConn,
 			}
 			gotResp, err := c.TensorGet(tt.args.name, tt.args.ct)
 			if (err != nil) != tt.wantErr {
@@ -1047,11 +1047,11 @@ func TestClient_TensorGetBlob(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool:            tt.fields.Pool,
-				PipelineActive:  tt.fields.PipelineActive,
-				PipelineMaxSize: tt.fields.PipelineMaxSize,
-				PipelinePos:     tt.fields.PipelinePos,
-				ActiveConn:      tt.fields.ActiveConn,
+				Pool:                  tt.fields.Pool,
+				PipelineActive:        tt.fields.PipelineActive,
+				PipelineAutoFlushSize: tt.fields.PipelineMaxSize,
+				PipelinePos:           tt.fields.PipelinePos,
+				ActiveConn:            tt.fields.ActiveConn,
 			}
 			gotDt, gotShape, gotData, err := c.TensorGetBlob(tt.args.name)
 			if (err != nil) != tt.wantErr {
@@ -1131,11 +1131,11 @@ func TestClient_TensorGetMeta(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool:            tt.fields.Pool,
-				PipelineActive:  tt.fields.PipelineActive,
-				PipelineMaxSize: tt.fields.PipelineMaxSize,
-				PipelinePos:     tt.fields.PipelinePos,
-				ActiveConn:      tt.fields.ActiveConn,
+				Pool:                  tt.fields.Pool,
+				PipelineActive:        tt.fields.PipelineActive,
+				PipelineAutoFlushSize: tt.fields.PipelineMaxSize,
+				PipelinePos:           tt.fields.PipelinePos,
+				ActiveConn:            tt.fields.ActiveConn,
 			}
 			gotDt, gotShape, err := c.TensorGetMeta(tt.args.name)
 			if (err != nil) != tt.wantErr {
@@ -1226,11 +1226,11 @@ func TestClient_TensorGetValues(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool:            tt.fields.Pool,
-				PipelineActive:  tt.fields.PipelineActive,
-				PipelineMaxSize: tt.fields.PipelineMaxSize,
-				PipelinePos:     tt.fields.PipelinePos,
-				ActiveConn:      tt.fields.ActiveConn,
+				Pool:                  tt.fields.Pool,
+				PipelineActive:        tt.fields.PipelineActive,
+				PipelineAutoFlushSize: tt.fields.PipelineMaxSize,
+				PipelinePos:           tt.fields.PipelinePos,
+				ActiveConn:            tt.fields.ActiveConn,
 			}
 			gotDt, gotShape, gotData, err := c.TensorGetValues(tt.args.name)
 			if (err != nil) != tt.wantErr {
@@ -1333,11 +1333,11 @@ func TestClient_TensorSet(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool:            tt.fields.Pool,
-				PipelineActive:  tt.fields.PipelineActive,
-				PipelineMaxSize: tt.fields.PipelineMaxSize,
-				PipelinePos:     tt.fields.PipelinePos,
-				ActiveConn:      tt.fields.ActiveConn,
+				Pool:                  tt.fields.Pool,
+				PipelineActive:        tt.fields.PipelineActive,
+				PipelineAutoFlushSize: tt.fields.PipelineMaxSize,
+				PipelinePos:           tt.fields.PipelinePos,
+				ActiveConn:            tt.fields.ActiveConn,
 			}
 			if err := c.TensorSet(tt.args.name, tt.args.dt, tt.args.dims, tt.args.data); (err != nil) != tt.wantErr {
 				t.Errorf("TensorSet() error = %v, wantErr %v", err, tt.wantErr)
@@ -1407,11 +1407,11 @@ func TestClient_Close(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool:            tt.fields.Pool,
-				PipelineActive:  tt.fields.PipelineActive,
-				PipelineMaxSize: tt.fields.PipelineMaxSize,
-				PipelinePos:     tt.fields.PipelinePos,
-				ActiveConn:      tt.fields.ActiveConn,
+				Pool:                  tt.fields.Pool,
+				PipelineActive:        tt.fields.PipelineActive,
+				PipelineAutoFlushSize: tt.fields.PipelineMaxSize,
+				PipelinePos:           tt.fields.PipelinePos,
+				ActiveConn:            tt.fields.ActiveConn,
 			}
 			if tt.createConn == true {
 				c.ActiveConnNX()
@@ -1446,19 +1446,19 @@ func TestClient_Pipeline(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool:            tt.fields.Pool,
-				PipelineActive:  tt.fields.PipelineActive,
-				PipelineMaxSize: tt.fields.PipelineMaxSize,
-				PipelinePos:     tt.fields.PipelinePos,
-				ActiveConn:      tt.fields.ActiveConn,
+				Pool:                  tt.fields.Pool,
+				PipelineActive:        tt.fields.PipelineActive,
+				PipelineAutoFlushSize: tt.fields.PipelineMaxSize,
+				PipelinePos:           tt.fields.PipelinePos,
+				ActiveConn:            tt.fields.ActiveConn,
 			}
 			if tt.fields.PipelineActive == false {
 				c.Pipeline(tt.args.PipelineMaxSize)
 				if c.PipelineActive != true {
 					t.Errorf("c.PipelineActive was incorrect, got: %t, want: %t.", c.PipelineActive, true)
 				}
-				if c.PipelineMaxSize != tt.args.PipelineMaxSize {
-					t.Errorf("c.PipelineMaxSize was incorrect, got: %d, want: %d.", c.PipelineMaxSize, tt.args.PipelineMaxSize)
+				if c.PipelineAutoFlushSize != tt.args.PipelineMaxSize {
+					t.Errorf("c.PipelineAutoFlushSize was incorrect, got: %d, want: %d.", c.PipelineAutoFlushSize, tt.args.PipelineMaxSize)
 				}
 			}
 			c.ActiveConnNX()
@@ -1500,11 +1500,11 @@ func TestClient_Receive(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			c := &Client{
-				Pool:            tt.fields.Pool,
-				PipelineActive:  tt.fields.PipelineActive,
-				PipelineMaxSize: tt.fields.PipelineMaxSize,
-				PipelinePos:     tt.fields.PipelinePos,
-				ActiveConn:      tt.fields.ActiveConn,
+				Pool:                  tt.fields.Pool,
+				PipelineActive:        tt.fields.PipelineActive,
+				PipelineAutoFlushSize: tt.fields.PipelineMaxSize,
+				PipelinePos:           tt.fields.PipelinePos,
+				ActiveConn:            tt.fields.ActiveConn,
 			}
 			gotReply, err := c.Receive()
 			if (err != nil) != tt.wantErr {

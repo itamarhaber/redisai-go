@@ -11,7 +11,7 @@ func main() {
 	// Create a client.
 	client := redisai.Connect("redis://localhost:6379", nil)
 
-	// Enable pipeline of commands on the client.
+	// Enable pipeline of commands on the client, autoFlushing at 3 commands
 	client.Pipeline(3)
 
 	// Set a tensor
