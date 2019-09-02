@@ -119,12 +119,12 @@ func TestClient_ModelDel(t *testing.T) {
 				PipelinePos:     tt.fields.PipelinePos,
 				ActiveConn:      tt.fields.ActiveConn,
 			}
-			err := c.ModelDel(tt.args.name);
+			err := c.ModelDel(tt.args.name)
 			if tt.fields.PipelineActive {
 				c.Flush()
 				_, err = c.Receive()
 			}
-			if  (err != nil) != tt.wantErr {
+			if (err != nil) != tt.wantErr {
 				t.Errorf("ModelDel() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -1396,14 +1396,13 @@ func TestClient_Close(t *testing.T) {
 		ActiveConn      redis.Conn
 	}
 	tests := []struct {
-		name    string
-		fields  fields
-		wantErr bool
+		name       string
+		fields     fields
+		wantErr    bool
 		createConn bool
 	}{
 		{key1, fields{createPool(), false, 0, 0, nil}, false, false},
 		{key2, fields{createPool(), false, 0, 0, nil}, false, true},
-
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1443,7 +1442,6 @@ func TestClient_Pipeline(t *testing.T) {
 	}{
 		{key1, fields{createPool(), true, 3, 0, nil}, args{3}},
 		{key1, fields{createPool(), false, 3, 0, nil}, args{3}},
-
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1467,12 +1465,12 @@ func TestClient_Pipeline(t *testing.T) {
 			c.Flush()
 			for i := uint32(0); i < tt.fields.PipelineMaxSize; i++ {
 				var oldPos = c.PipelinePos
-				_, err := c.TensorGet("test:Pool:1", TensorContentTypeMeta )
+				_, err := c.TensorGet("test:Pool:1", TensorContentTypeMeta)
 				if err != nil {
 					t.Errorf("while working on TestClient_Pipeline, TensorGet() returned error = %v", err)
 				}
-				if oldPos + 1 != c.PipelinePos && c.PipelinePos != 0 {
-					t.Errorf("PipelinePos was incorrect, got: %d, want: %d.", c.PipelinePos, oldPos + 1)
+				if oldPos+1 != c.PipelinePos && c.PipelinePos != 0 {
+					t.Errorf("PipelinePos was incorrect, got: %d, want: %d.", c.PipelinePos, oldPos+1)
 				}
 			}
 			if 0 != c.PipelinePos {

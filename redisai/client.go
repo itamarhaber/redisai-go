@@ -68,6 +68,13 @@ func (c *Client) Pipeline(PipelineMaxSize uint32) {
 	c.PipelineMaxSize = PipelineMaxSize
 }
 
+func (c *Client) DisablePipeline() (err error) {
+	err = c.Flush()
+	c.PipelineActive = false
+	c.PipelinePos = 0
+	return
+}
+
 func (c *Client) Flush() (err error) {
 	if c.ActiveConn != nil && c.PipelineActive {
 		atomic.StoreUint32(&c.PipelinePos, 0)
