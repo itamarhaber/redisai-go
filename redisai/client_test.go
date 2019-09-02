@@ -189,6 +189,7 @@ func TestClient_ModelGet(t *testing.T) {
 
 func TestClient_ModelRun(t *testing.T) {
 	keyModel1 := "test:ModelRun:1"
+	keyModel2 := "test:ModelRun:2:Pipelined"
 	keyModelWrongInput1 := "test:ModelWrongInput:1"
 	keyTransaction1 := "test:ModelRun:transaction:1"
 	keyReference1 := "test:ModelRun:reference:1"
@@ -201,6 +202,8 @@ func TestClient_ModelRun(t *testing.T) {
 	}
 	simpleClient := Connect("", createPool())
 	err = simpleClient.ModelSet(keyModel1, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"})
+	err = simpleClient.ModelSet(keyModel2, BackendTF, DeviceCPU, data, []string{"transaction", "reference"}, []string{"output"})
+
 	if err != nil {
 		t.Errorf("Error preparing for ModelRun(), while issuing ModelSet. error = %v", err)
 		return
@@ -520,6 +523,7 @@ func TestClient_ModelRun(t *testing.T) {
 		wantErr bool
 	}{
 		{keyModel1, fields{createPool(), false, 0, 0, nil}, args{keyModel1, []string{keyTransaction1, keyReference1}, []string{keyOutput1}}, false},
+		{keyModel2, fields{createPool(), true, 1, 0, nil}, args{keyModel2, []string{keyTransaction1, keyReference1}, []string{keyOutput1}}, false},
 		{keyModelWrongInput1, fields{createPool(), false, 0, 0, nil}, args{keyModel1, []string{keyTransaction1}, []string{keyOutput1}}, true},
 	}
 	for _, tt := range tests {
@@ -1317,7 +1321,11 @@ func TestClient_TensorSet(t *testing.T) {
 }
 
 func TestConnect(t *testing.T) {
+	value, exists := os.LookupEnv("REDISAI_TEST_HOST")
 	urlTest1 := "redis://localhost:6379"
+	if exists && value != "" {
+		urlTest1 = value
+	}
 	cpool1 := &redis.Pool{
 		MaxIdle:     3,
 		IdleTimeout: 240 * time.Second,
@@ -1339,7 +1347,6 @@ func TestConnect(t *testing.T) {
 		comparePool bool
 	}{
 		{"test:Connect:WithPool:1", args{urlTest1, nil, false, 0, 0, nil}, cpool1, false},
-		//{"test:Connect:WithoutPool:1", args{urlTest1,false, 0,0, nil}, nil, false },
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1347,6 +1354,85 @@ func TestConnect(t *testing.T) {
 			gotC := Connect(tt.args.url, tt.args.Pool)
 			if tt.comparePool == true && !reflect.DeepEqual(gotC.Pool, tt.pool) {
 				t.Errorf("Connect() = %v, want %v", gotC.Pool, tt.pool)
+			}
+		})
+	}
+}
+
+func TestClient_Close(t *testing.T) {
+	key1 := "test:Close:1:ActiveConnNil"
+	type fields struct {
+		Pool            *redis.Pool
+		PipelineActive  bool
+		PipelineMaxSize uint32
+		PipelinePos     uint32
+		ActiveConn      redis.Conn
+	}
+	tests := []struct {
+		name    string
+		fields  fields
+		wantErr bool
+	}{
+		{key1, fields{createPool(), false, 0, 0, nil}, false},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Client{
+				Pool:            tt.fields.Pool,
+				PipelineActive:  tt.fields.PipelineActive,
+				PipelineMaxSize: tt.fields.PipelineMaxSize,
+				PipelinePos:     tt.fields.PipelinePos,
+				ActiveConn:      tt.fields.ActiveConn,
+			}
+			if err := c.Close(); (err != nil) != tt.wantErr {
+				t.Errorf("Close() error = %v, wantErr %v", err, tt.wantErr)
+			}
+		})
+	}
+}
+
+func TestClient_Pipeline(t *testing.T) {
+	key1 := "test:Pipeline:1"
+	type fields struct {
+		Pool            *redis.Pool
+		PipelineActive  bool
+		PipelineMaxSize uint32
+		PipelinePos     uint32
+		ActiveConn      redis.Conn
+	}
+	type args struct {
+		PipelineMaxSize uint32
+	}
+	tests := []struct {
+		name   string
+		fields fields
+		args   args
+	}{
+		{key1, fields{createPool(), true, 3, 0, nil}, args{3}},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			c := &Client{
+				Pool:            tt.fields.Pool,
+				PipelineActive:  tt.fields.PipelineActive,
+				PipelineMaxSize: tt.fields.PipelineMaxSize,
+				PipelinePos:     tt.fields.PipelinePos,
+				ActiveConn:      tt.fields.ActiveConn,
+			}
+			c.PollNX()
+			c.Flush()
+			for i := uint32(0); i < tt.fields.PipelineMaxSize; i++ {
+				var oldPos = c.PipelinePos
+				_, err := c.TensorGet("test:Pool:1", TensorContentTypeMeta )
+				if err != nil {
+					t.Errorf("while working on TestClient_Pipeline, TensorGet() returned error = %v", err)
+				}
+				if oldPos + 1 != c.PipelinePos {
+					t.Errorf("PipelinePos was incorrect, got: %d, want: %d.", c.PipelinePos, oldPos + 1)
+				}
+			}
+			if 0 != c.PipelinePos {
+				t.Errorf("PipelinePos was incorrect, got: %d, want: %d.", c.PipelinePos, 0)
 			}
 		})
 	}
