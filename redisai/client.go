@@ -56,7 +56,7 @@ func (c *Client) Close() (err error) {
 	return
 }
 
-func (c *Client) PollNX() {
+func (c *Client) ActiveConnNX() {
 	if c.ActiveConn == nil {
 		c.ActiveConn = c.Pool.Get()
 	}
@@ -99,7 +99,7 @@ func (c *Client) pipeIncr(conn redis.Conn) (err error) {
 
 func (c *Client) TensorGet(name string, ct TensorContentType) (data []interface{}, err error) {
 	args := redis.Args{}.Add(name, ct)
-	c.PollNX()
+	c.ActiveConnNX()
 	if c.PipelineActive {
 		err = c.SendAndIncr("AI.TENSORGET", args)
 	} else {
@@ -156,7 +156,7 @@ func (c *Client) TensorGetBlob(name string) (dt DataType, shape []int, data []by
 
 func (c *Client) ModelGet(name string) (data []interface{}, err error) {
 	args := redis.Args{}.Add(name)
-	c.PollNX()
+	c.ActiveConnNX()
 	if c.PipelineActive {
 		err = c.SendAndIncr("AI.MODELGET", args)
 	} else {
@@ -178,7 +178,7 @@ func (c *Client) ModelGet(name string) (data []interface{}, err error) {
 
 func (c *Client) ModelDel(name string) (err error) {
 	args := redis.Args{}.Add(name)
-	c.PollNX()
+	c.ActiveConnNX()
 	if c.PipelineActive {
 		err = c.SendAndIncr("AI.MODELDEL", args)
 	} else {
@@ -189,7 +189,7 @@ func (c *Client) ModelDel(name string) (err error) {
 
 func (c *Client) ScriptGet(name string) (data []interface{}, err error) {
 	args := redis.Args{}.Add(name)
-	c.PollNX()
+	c.ActiveConnNX()
 	if c.PipelineActive {
 		err = c.SendAndIncr("AI.SCRIPTGET", args)
 	} else {
@@ -210,7 +210,7 @@ func (c *Client) ScriptGet(name string) (data []interface{}, err error) {
 
 func (c *Client) ScriptDel(name string) (err error) {
 	args := redis.Args{}.Add(name)
-	c.PollNX()
+	c.ActiveConnNX()
 	if c.PipelineActive {
 		err = c.SendAndIncr("AI.SCRIPTDEL", args)
 	} else {
@@ -221,7 +221,7 @@ func (c *Client) ScriptDel(name string) (err error) {
 
 func (c *Client) LoadBackend(backend_identifier BackendType, location string) (err error) {
 	args := redis.Args{}.Add("LOADBACKEND").Add(backend_identifier).Add(location)
-	c.PollNX()
+	c.ActiveConnNX()
 	if c.PipelineActive {
 		err = c.SendAndIncr("AI.CONFIG", args)
 	} else {
@@ -241,7 +241,7 @@ func (c *Client) ModelSet(name string, backend BackendType, device DeviceType, d
 	}
 	args = args.Add(data)
 
-	c.PollNX()
+	c.ActiveConnNX()
 	if c.PipelineActive {
 		err = c.SendAndIncr("AI.MODELSET", args)
 	} else {
@@ -262,7 +262,7 @@ func (c *Client) ModelSetFromFile(name string, backend BackendType, device Devic
 // ModelRun runs a RedisAI model
 func (c *Client) ModelRun(name string, inputs []string, outputs []string) (err error) {
 	args := ModelRunArgs(name, inputs, outputs, false)
-	c.PollNX()
+	c.ActiveConnNX()
 	if c.PipelineActive {
 		err = c.SendAndIncr("AI.MODELRUN", args)
 	} else {
@@ -274,7 +274,7 @@ func (c *Client) ModelRun(name string, inputs []string, outputs []string) (err e
 // ScriptSet sets a RedisAI script from a blob
 func (c *Client) ScriptSet(name string, device DeviceType, script_source string) (err error) {
 	args := redis.Args{}.Add(name, device, script_source)
-	c.PollNX()
+	c.ActiveConnNX()
 	if c.PipelineActive {
 		err = c.SendAndIncr("AI.SCRIPTSET", args)
 	} else {
@@ -301,7 +301,7 @@ func (c *Client) ScriptRun(name string, fn string, inputs []string, outputs []st
 	if len(outputs) > 0 {
 		args = args.Add("OUTPUTS").AddFlat(outputs)
 	}
-	c.PollNX()
+	c.ActiveConnNX()
 	if c.PipelineActive {
 		err = c.SendAndIncr("AI.SCRIPTRUN", args)
 	} else {
@@ -316,7 +316,7 @@ func (c *Client) TensorSet(name string, dt DataType, dims []int, data interface{
 	if err != nil {
 		return err
 	}
-	c.PollNX()
+	c.ActiveConnNX()
 	if c.PipelineActive {
 		err = c.SendAndIncr("AI.TENSORSET", args)
 	} else {

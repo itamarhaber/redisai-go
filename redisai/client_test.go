@@ -1361,6 +1361,7 @@ func TestConnect(t *testing.T) {
 
 func TestClient_Close(t *testing.T) {
 	key1 := "test:Close:1:ActiveConnNil"
+	key2 := "test:Close:2"
 	type fields struct {
 		Pool            *redis.Pool
 		PipelineActive  bool
@@ -1372,8 +1373,11 @@ func TestClient_Close(t *testing.T) {
 		name    string
 		fields  fields
 		wantErr bool
+		createConn bool
 	}{
-		{key1, fields{createPool(), false, 0, 0, nil}, false},
+		{key1, fields{createPool(), false, 0, 0, nil}, false, false},
+		{key2, fields{createPool(), false, 0, 0, nil}, false, true},
+
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1383,6 +1387,9 @@ func TestClient_Close(t *testing.T) {
 				PipelineMaxSize: tt.fields.PipelineMaxSize,
 				PipelinePos:     tt.fields.PipelinePos,
 				ActiveConn:      tt.fields.ActiveConn,
+			}
+			if tt.createConn == true {
+				c.ActiveConnNX()
 			}
 			if err := c.Close(); (err != nil) != tt.wantErr {
 				t.Errorf("Close() error = %v, wantErr %v", err, tt.wantErr)
@@ -1409,6 +1416,8 @@ func TestClient_Pipeline(t *testing.T) {
 		args   args
 	}{
 		{key1, fields{createPool(), true, 3, 0, nil}, args{3}},
+		{key1, fields{createPool(), false, 3, 0, nil}, args{3}},
+
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -1419,7 +1428,16 @@ func TestClient_Pipeline(t *testing.T) {
 				PipelinePos:     tt.fields.PipelinePos,
 				ActiveConn:      tt.fields.ActiveConn,
 			}
-			c.PollNX()
+			if tt.fields.PipelineActive == false {
+				c.Pipeline(tt.args.PipelineMaxSize)
+				if c.PipelineActive != true {
+					t.Errorf("c.PipelineActive was incorrect, got: %t, want: %t.", c.PipelineActive, true)
+				}
+				if c.PipelineMaxSize != tt.args.PipelineMaxSize {
+					t.Errorf("c.PipelineMaxSize was incorrect, got: %d, want: %d.", c.PipelineMaxSize, tt.args.PipelineMaxSize)
+				}
+			}
+			c.ActiveConnNX()
 			c.Flush()
 			for i := uint32(0); i < tt.fields.PipelineMaxSize; i++ {
 				var oldPos = c.PipelinePos
@@ -1434,6 +1452,7 @@ func TestClient_Pipeline(t *testing.T) {
 			if 0 != c.PipelinePos {
 				t.Errorf("PipelinePos was incorrect, got: %d, want: %d.", c.PipelinePos, 0)
 			}
+			c.Close()
 		})
 	}
 }
