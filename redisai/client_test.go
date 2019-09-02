@@ -24,7 +24,9 @@ func createPool() *redis.Pool {
 }
 
 func TestClient_LoadBackend(t *testing.T) {
-	keyTest1 := "test:LoadBackend:Unexistant:1"
+	keyTest1 := "test:LoadBackend:1:Unexistent"
+	keyTest2 := "test:LoadBackend:2:Unexistent:Pipelined"
+
 	type fields struct {
 		Pool            *redis.Pool
 		PipelineActive  bool
@@ -43,6 +45,7 @@ func TestClient_LoadBackend(t *testing.T) {
 		wantErr bool
 	}{
 		{keyTest1, fields{createPool(), false, 0, 0, nil}, args{BackendTF, "unexistant"}, true},
+		{keyTest2, fields{createPool(), true, 1, 0, nil}, args{BackendTF, "unexistant"}, true},
 
 		// TODO: Add test cases.
 	}
@@ -55,7 +58,12 @@ func TestClient_LoadBackend(t *testing.T) {
 				PipelinePos:     tt.fields.PipelinePos,
 				ActiveConn:      tt.fields.ActiveConn,
 			}
-			if err := c.LoadBackend(tt.args.backend_identifier, tt.args.location); (err != nil) != tt.wantErr {
+			err := c.LoadBackend(tt.args.backend_identifier, tt.args.location)
+			if tt.fields.PipelineActive {
+				c.Flush()
+				_, err = c.ActiveConn.Receive()
+			}
+			if (err != nil) != tt.wantErr {
 				t.Errorf("LoadBackend() error = %v, wantErr %v", err, tt.wantErr)
 			}
 		})
@@ -746,13 +754,17 @@ func TestClient_ScriptGet(t *testing.T) {
 }
 
 func TestClient_ScriptRun(t *testing.T) {
-
-	keyScript := "test:ScriptRun:1"
-	keyScriptEmpty := "test:ScriptRun:3:Empty"
-
+	keyScript1 := "test:ScriptRun:1"
+	keyScript2 := "test:ScriptRun:2:Pipelined"
+	keyScript3Empty := "test:ScriptRun:3:Empty"
 	scriptBin := "def bar(a, b):\n    return a + b\n"
 	simpleClient := Connect("", createPool())
-	err := simpleClient.ScriptSet(keyScript, DeviceCPU, scriptBin)
+	err := simpleClient.ScriptSet(keyScript1, DeviceCPU, scriptBin)
+	if err != nil {
+		t.Errorf("Error preparing for ScriptRun(), while issuing ScriptSet. error = %v", err)
+		return
+	}
+	err = simpleClient.ScriptSet(keyScript2, DeviceCPU, scriptBin)
 	if err != nil {
 		t.Errorf("Error preparing for ScriptRun(), while issuing ScriptSet. error = %v", err)
 		return
@@ -777,7 +789,8 @@ func TestClient_ScriptRun(t *testing.T) {
 		args    args
 		wantErr bool
 	}{
-		{keyScriptEmpty, fields{createPool(), false, 0, 0, nil}, args{keyScriptEmpty, "", []string{""}, []string{""}}, true},
+		{keyScript2, fields{createPool(), true, 1, 0, nil}, args{keyScript2, "", []string{""}, []string{""}}, false},
+		{keyScript3Empty, fields{createPool(), false, 0, 0, nil}, args{keyScript3Empty, "", []string{""}, []string{""}}, true},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
