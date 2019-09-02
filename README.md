@@ -16,8 +16,10 @@ go get github.com/filipecosta90/redisai-go/redisai
 ```
 
 # Usage Examples
-See the examples folder for further feature samples:
-##[Simple Client](./examples/redisai_simple_client)
+See the [examples](./examples) folder for further feature samples:
+
+## Simple Client 
+[(sample code here)](./examples/redisai_simple_client)
 
 ```go
 package main
@@ -51,7 +53,8 @@ func main() {
 }
 ```
 
-####[Pipelined Client](./examples/redisai_pipelined_client)
+## Pipelined Client 
+[(sample code here)](./examples/redisai_pipelined_client)
 ```go
 package main
 
